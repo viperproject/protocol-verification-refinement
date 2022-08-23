@@ -1,11 +1,11 @@
 {-# LANGUAGE EmptyDataDecls, RankNTypes, ScopedTypeVariables #-}
 
 module
-  GenericHelperFunctions(anya, nubBy, nub, enum, isSome, fstList, sndList,
-                          zipWith, flipPair, collectThe, stringOfNat,
-                          splitAndGetFst, splitAndGetSnd, prependToString,
-                          sortIntoBucketsOrdered, sortIntoBuckets,
-                          stringOfInteger)
+  GenericHelperFunctions(anya, nubBy, nub, enum, scanl, isSome, fstList,
+                          sndList, uncurry, zipWith, flipPair, collectThe,
+                          stringOfNat, splitAndGetFst, splitAndGetSnd,
+                          prependToString, sortIntoBucketsOrdered,
+                          sortIntoBuckets, stringOfInteger)
   where {
 
 import Prelude ((==), (/=), (<), (<=), (>=), (>), (+), (-), (*), (/), (**),
@@ -36,6 +36,12 @@ enum :: forall a. Arith.Nat -> [a] -> [(Arith.Nat, a)];
 enum uu [] = [];
 enum i (x : xs) = (i, x) : enum (Arith.plus_nat i Arith.one_nat) xs;
 
+scanl :: forall a b. (a -> b -> a) -> a -> [b] -> [a];
+scanl f s ls = s : (case ls of {
+                     [] -> [];
+                     x : a -> scanl f (f s x) a;
+                   });
+
 unzip :: forall a b. [(a, b)] -> ([a], [b]);
 unzip inp = let {
               splitPair = (\ p ps -> (fst p : fst ps, snd p : snd ps));
@@ -50,6 +56,9 @@ fstList pairList = fst (unzip pairList);
 
 sndList :: forall a b. [(a, b)] -> [b];
 sndList pairList = snd (unzip pairList);
+
+uncurry :: forall a b c. (a -> b -> c) -> (a, b) -> c;
+uncurry f p = f (fst p) (snd p);
 
 zipWith :: forall a b c. (a -> b -> c) -> [a] -> [b] -> [c];
 zipWith uu [] uv = [];

@@ -1,6 +1,8 @@
 {-# LANGUAGE EmptyDataDecls, RankNTypes, ScopedTypeVariables #-}
 
-module List(upt, fold, foldl, foldr, hd, tl, replicate, map_filter, size_list)
+module
+  List(upt, fold, last, foldl, foldr, butlast, hd, tl, replicate, map_filter,
+        size_list)
   where {
 
 import Prelude ((==), (/=), (<), (<=), (>=), (>), (+), (-), (*), (/), (**),
@@ -20,6 +22,9 @@ fold :: forall a b. (a -> b -> b) -> [a] -> b -> b;
 fold f (x : xs) s = fold f xs (f x s);
 fold f [] s = s;
 
+last :: forall a. [a] -> a;
+last (x : xs) = (if null xs then x else last xs);
+
 foldl :: forall a b. (a -> b -> a) -> a -> [b] -> a;
 foldl f a [] = a;
 foldl f a (x : xs) = foldl f (f a x) xs;
@@ -27,6 +32,10 @@ foldl f a (x : xs) = foldl f (f a x) xs;
 foldr :: forall a b. (a -> b -> b) -> [a] -> b -> b;
 foldr f [] = id;
 foldr f (x : xs) = f x . foldr f xs;
+
+butlast :: forall a. [a] -> [a];
+butlast [] = [];
+butlast (x : xs) = (if null xs then [] else x : butlast xs);
 
 hd :: forall a. [a] -> a;
 hd (x21 : x22) = x21;
