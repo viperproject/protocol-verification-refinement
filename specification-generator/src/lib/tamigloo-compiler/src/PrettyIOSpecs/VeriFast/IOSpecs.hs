@@ -174,11 +174,12 @@ prettyRestrForm :: Document d => TID.RestrFormula -> d
 prettyRestrForm (TID.Ato atom) = prettyAtom atom
 prettyRestrForm (TID.Not f) = text "!(" <> prettyRestrForm f <> text ")"
 prettyRestrForm (TID.Conn conn l r) = prettyConn conn (parens (prettyRestrForm l)) (parens (prettyRestrForm r))
-prettyRestrForm (TID.REX t f) = error "Patterns in definitions of restrictions not supported in VeriFast." -- text "(" <> (connectREX [t] f) <> text ")"
+prettyRestrForm (TID.RFA t f) = error "Patterns in definitions of restrictions not supported in VeriFast." -- text "(" <> (connectRFA [t] f) <> text ")"
+    {-
     where
-        connectREX :: Document d => [T.LNTerm] -> TID.RestrFormula -> d
-        connectREX qs (TID.REX v formula) = connectREX (qs ++ [v]) formula
-        connectREX qs formula = exQuantFirst (map (prettyVFLNTerm True) qs) (prettyRestrForm formula)
+        connectRFA :: Document d => [T.LNTerm] -> TID.RestrFormula -> d
+        connectRFA qs (TID.REX v formula) = connectRFA (qs ++ [v]) formula
+        connectRFA qs formula = exQuantFirst (map (prettyVFLNTerm True) qs) (prettyRestrForm formula)
         -- copied from Main.Console
         renderDoc :: Doc -> String
         renderDoc = renderStyle (defaultStyle)
@@ -194,6 +195,7 @@ prettyRestrForm (TID.REX t f) = error "Patterns in definitions of restrictions n
             if x == q 
             then ("?"++x) : xs 
             else x : (auxChangeFirst q xs)
+    -}
 
 prettyAtom :: Document d => TID.Atom -> d
 prettyAtom (TID.Atom f) = text (prettyFact True f)

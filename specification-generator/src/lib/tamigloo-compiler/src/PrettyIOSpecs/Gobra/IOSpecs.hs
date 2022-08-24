@@ -128,13 +128,14 @@ prettyRestrForm :: Document d => TID.RestrFormula -> d
 prettyRestrForm (TID.Ato atom) = prettyAtom atom
 prettyRestrForm (TID.Not f) = text "!(" <> prettyRestrForm f <> text ")"
 prettyRestrForm (TID.Conn conn l r) = parens (prettyRestrForm l) <> text (showConn conn) <> parens (prettyRestrForm r)
-prettyRestrForm (TID.REX t f) = text "(" <> (connectREX [t] f) <> text ")"
+prettyRestrForm (TID.RFA t f) = text "(" <> (connectRFA [t] f) <> text ")"
     where
-        connectREX :: Document d => [T.LNTerm] -> TID.RestrFormula -> d
-        connectREX qs (TID.REX v formula) = connectREX (qs ++ [v]) formula
-        connectREX qs formula =
-            exists 
-                (hcat . punctuate (text ", ") $ map (text . prettyGobraLNTermWithType) qs) 
+        connectRFA :: Document d => [T.LNTerm] -> TID.RestrFormula -> d
+        connectRFA qs (TID.RFA v formula) = connectRFA (qs ++ [v]) formula
+        connectRFA qs formula =
+            forallWithTriggerSetting None 
+                (hcat . punctuate (text ", ") $ map (text . prettyGobraLNTermWithType) qs)
+                []
                 (prettyRestrForm formula)
 
 

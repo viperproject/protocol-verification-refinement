@@ -63,11 +63,11 @@ hasFAPP f =
   List.foldr (\ t -> (\ a -> isFAPP t || a)) (TamiglooDatatypes.accTermList f)
     False;
 
-dbiToREX ::
+dbiToRFA ::
   Integer ->
     ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar);
-dbiToREX i =
-  ForeignImports.LIT (ForeignImports.Var (ForeignImports.LVar "rEX" ForeignImports.LSortMsg i));
+dbiToRFA i =
+  ForeignImports.LIT (ForeignImports.Var (ForeignImports.LVar "rFA" ForeignImports.LSortMsg i));
 
 restrConj ::
   [TamiglooDatatypes.RestrFormula] -> Maybe TamiglooDatatypes.RestrFormula;
@@ -76,23 +76,23 @@ restrConj fs =
     else Just (List.foldr (TamiglooDatatypes.Conn ForeignImports.And)
                 (List.butlast fs) (List.last fs)));
 
-unwrapREX :: TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
-unwrapREX (TamiglooDatatypes.REX uu f) = unwrapREX f;
-unwrapREX (TamiglooDatatypes.Ato v) = TamiglooDatatypes.Ato v;
-unwrapREX (TamiglooDatatypes.Not v) = TamiglooDatatypes.Not v;
-unwrapREX (TamiglooDatatypes.Conn v va vb) = TamiglooDatatypes.Conn v va vb;
+unwrapRFA :: TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
+unwrapRFA (TamiglooDatatypes.RFA uu f) = unwrapRFA f;
+unwrapRFA (TamiglooDatatypes.Ato v) = TamiglooDatatypes.Ato v;
+unwrapRFA (TamiglooDatatypes.Not v) = TamiglooDatatypes.Not v;
+unwrapRFA (TamiglooDatatypes.Conn v va vb) = TamiglooDatatypes.Conn v va vb;
 
-wrapInREX ::
+wrapInRFA ::
   [ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar)] ->
     TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
-wrapInREX [] f = f;
-wrapInREX (t : ts) f = TamiglooDatatypes.REX t (wrapInREX ts f);
+wrapInRFA [] f = f;
+wrapInRFA (t : ts) f = TamiglooDatatypes.RFA t (wrapInRFA ts f);
 
-mappingREX ::
+mappingRFA ::
   TamiglooDatatypes.Fact ->
     [(Integer,
        ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar))];
-mappingREX f =
+mappingRFA f =
   let {
     dbis =
       GenericHelperFunctions.nub
@@ -100,7 +100,7 @@ mappingREX f =
           (List.map_filter
             (\ x -> (if isFAPP x then Just (getDbis x) else Nothing))
             (TamiglooDatatypes.accTermList f)));
-  } in zip dbis (map dbiToREX dbis);
+  } in zip dbis (map dbiToRFA dbis);
 
 replaceDbiLNTerm ::
   Integer ->
@@ -212,7 +212,7 @@ separateRestr (TamiglooDatatypes.Conn ForeignImports.Or va vb) =
   error "undefined";
 separateRestr (TamiglooDatatypes.Conn ForeignImports.Iff va vb) =
   error "undefined";
-separateRestr (TamiglooDatatypes.REX v va) = error "undefined";
+separateRestr (TamiglooDatatypes.RFA v va) = error "undefined";
 
 combineRestr ::
   (TamiglooDatatypes.Fact, TamiglooDatatypes.RestrFormula) ->
@@ -313,13 +313,13 @@ linearizeRestr restr =
             else snd sepNewRestr);
   } in combineRestr (fst sepNewRestr, rhs);
 
-createEqPatternREX ::
+createEqPatternRFA ::
   TamiglooDatatypes.Fact ->
     TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
-createEqPatternREX actFact restrREX =
+createEqPatternRFA actFact restrRFA =
   let {
     defFactTerms =
-      TamiglooDatatypes.accTermList (fst (separateRestr (unwrapREX restrREX)));
+      TamiglooDatatypes.accTermList (fst (separateRestr (unwrapRFA restrRFA)));
     actFactTerms = TamiglooDatatypes.accTermList actFact;
     zipFAPPActDefTerms = filter (isFAPP . snd) (zip actFactTerms defFactTerms);
     eqs = map (\ p ->
@@ -348,31 +348,31 @@ instantiationMap dbiFact appFact =
   } in concatMap (GenericHelperFunctions.uncurry instantiationMapLNTerm)
          (zip dbiTermList appTermList);
 
-createRestrREX ::
+createRestrRFA ::
   TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
-createRestrREX restr =
+createRestrRFA restr =
   let {
     sepRestr = separateRestr restr;
-    rexMap = mappingREX (fst sepRestr);
-    a = List.fold (GenericHelperFunctions.uncurry replaceDbi) rexMap restr;
-  } in wrapInREX (GenericHelperFunctions.sndList rexMap) a;
+    rFAMap = mappingRFA (fst sepRestr);
+    a = List.fold (GenericHelperFunctions.uncurry replaceDbi) rFAMap restr;
+  } in wrapInRFA (GenericHelperFunctions.sndList rFAMap) a;
 
 instantiateHasFAPP ::
   TamiglooDatatypes.Fact ->
     TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
 instantiateHasFAPP actFact linRestr =
   let {
-    restrREX = createRestrREX linRestr;
-    eqsPattern = createEqPatternREX actFact restrREX;
-    unwrapRestrREX = separateRestr (unwrapREX restrREX);
-    restrREXwithEq =
-      TamiglooDatatypes.Conn ForeignImports.Imp eqsPattern (snd unwrapRestrREX);
+    restrRFA = createRestrRFA linRestr;
+    eqsPattern = createEqPatternRFA actFact restrRFA;
+    unwrapRestrRFA = separateRestr (unwrapRFA restrRFA);
+    restrRFAwithEq =
+      TamiglooDatatypes.Conn ForeignImports.Imp eqsPattern (snd unwrapRestrRFA);
     instMap = instantiationMap (fst (separateRestr linRestr)) actFact;
-    instRestr = instantiateWithMapping instMap restrREXwithEq;
-    rexVars =
+    instRestr = instantiateWithMapping instMap restrRFAwithEq;
+    rFAVars =
       GenericHelperFunctions.sndList
-        (mappingREX (fst (separateRestr linRestr)));
-  } in wrapInREX rexVars instRestr;
+        (mappingRFA (fst (separateRestr linRestr)));
+  } in wrapInRFA rFAVars instRestr;
 
 instantiateRestr ::
   TamiglooDatatypes.Fact ->

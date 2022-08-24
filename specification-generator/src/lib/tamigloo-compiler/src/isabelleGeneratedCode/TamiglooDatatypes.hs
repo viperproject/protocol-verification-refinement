@@ -163,7 +163,7 @@ data Rule = Rule RuleGroup String [Fact] [Fact] [Fact]
 
 data RestrFormula = Ato Atom | Not RestrFormula
   | Conn ForeignImports.Connective RestrFormula RestrFormula
-  | REX (ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar))
+  | RFA (ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar))
       RestrFormula
   deriving (Prelude.Show);
 
