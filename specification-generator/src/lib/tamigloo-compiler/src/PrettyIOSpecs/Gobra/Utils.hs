@@ -8,6 +8,7 @@ module PrettyIOSpecs.Gobra.Utils (
     ,   gobraHeader
     ,   domain
 
+    ,   exists
     ,   forallWithTriggerSetting
 
     ,   axiom
@@ -320,10 +321,8 @@ forallWithTriggerSetting :: Document d => TriggerSetting -> d -> [d] -> d -> d
 forallWithTriggerSetting =
     quantifiedWithTriggerSetting "forall"
 
-{-
 exists :: Document d => d -> d -> d
 exists termsWithType body = quantifiedWithTriggerSetting "exists" None termsWithType [] body
--}
 
 quantifiedWithTriggerSetting :: Document d => String -> TriggerSetting -> d -> [d] -> d -> d
 quantifiedWithTriggerSetting quant triggerSetting termsWithType triggers body =

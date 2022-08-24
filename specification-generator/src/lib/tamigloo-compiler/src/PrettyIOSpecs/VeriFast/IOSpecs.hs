@@ -14,6 +14,8 @@ import              Prelude
 import qualified    Data.Map as Map
 import              Text.PrettyPrint.Class
 import              Data.List(delete)
+import              Data.List.Split
+
 
 import qualified    Theory as T
 import qualified    Theory.Model.Formula as Form
@@ -152,7 +154,7 @@ prettyVFIOSFormula f =
 
 
 -- restrictions
-{-
+{- only for debugging
 prettyVFRestrs :: Document d => TID.Theory -> d
 prettyVFRestrs (TID.Theory _ _ thyItems) = 
     text "==== Restrictions ==========\n" $$
@@ -165,10 +167,33 @@ prettyVFRestrs (TID.Theory _ _ thyItems) =
         getRestrName :: TID.TheoryItem -> String
         getRestrName (TID.RestrItem name _) = name
 -}
+
+
+
 prettyRestrForm :: Document d => TID.RestrFormula -> d
 prettyRestrForm (TID.Ato atom) = prettyAtom atom
 prettyRestrForm (TID.Not f) = text "!(" <> prettyRestrForm f <> text ")"
 prettyRestrForm (TID.Conn conn l r) = prettyConn conn (parens (prettyRestrForm l)) (parens (prettyRestrForm r))
+prettyRestrForm (TID.REX t f) = error "Patterns in definitions of restrictions not supported in VeriFast." -- text "(" <> (connectREX [t] f) <> text ")"
+    where
+        connectREX :: Document d => [T.LNTerm] -> TID.RestrFormula -> d
+        connectREX qs (TID.REX v formula) = connectREX (qs ++ [v]) formula
+        connectREX qs formula = exQuantFirst (map (prettyVFLNTerm True) qs) (prettyRestrForm formula)
+        -- copied from Main.Console
+        renderDoc :: Doc -> String
+        renderDoc = renderStyle (defaultStyle)
+        -- not ideal but have to prepend '?' to first occurence of existentially quanitified vars
+        exQuantFirst :: Document d => [String] -> Doc -> d
+        exQuantFirst qs df = text $ foldr (\a b -> auxEQF a b) (renderDoc df) qs
+        auxEQF :: String -> String -> String
+        auxEQF q s =
+            (concat $ auxChangeFirst q $ split (onSublist q) s) 
+        auxChangeFirst :: String -> [String] -> [String]
+        auxChangeFirst _ [] = []
+        auxChangeFirst q (x:xs) =
+            if x == q 
+            then ("?"++x) : xs 
+            else x : (auxChangeFirst q xs)
 
 prettyAtom :: Document d => TID.Atom -> d
 prettyAtom (TID.Atom f) = text (prettyFact True f)
@@ -176,7 +201,7 @@ prettyAtom (TID.EqE t1 t2) = text (prettyVFLNTerm True t1) <> text " == " <> tex
 prettyAtom (TID.TF b) = if b then text "true" else text "false" 
 
 prettyConn :: Document d => Form.Connective -> d -> d -> d
-prettyConn Form.And l r = l <> text " && " <> r
+prettyConn Form.And l r = l <> text " &&" $$ r
 prettyConn Form.Or l r = l <> text " || " <> r
 prettyConn Form.Imp l r = l <> text " ? " <> r <> text " : true"
 prettyConn Form.Iff l r = l <> text " == " <> r

@@ -12,10 +12,18 @@ import qualified ForeignImports;
 import qualified Option;
 import qualified Orderings;
 import qualified HOL;
-import qualified List;
 import qualified Arith;
+import qualified List;
 import qualified GenericHelperFunctions;
 import qualified TamiglooDatatypes;
+
+isFAPP ::
+  ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar) ->
+    Bool;
+isFAPP t = (case t of {
+             ForeignImports.LIT _ -> False;
+             ForeignImports.FAPP _ _ -> True;
+           });
 
 getDbiLit ::
   ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar) ->
@@ -50,12 +58,49 @@ getDbis lnTerm =
     TamiglooDatatypes.getVarsVTerm)
     lnTerm;
 
+hasFAPP :: TamiglooDatatypes.Fact -> Bool;
+hasFAPP f =
+  List.foldr (\ t -> (\ a -> isFAPP t || a)) (TamiglooDatatypes.accTermList f)
+    False;
+
+dbiToREX ::
+  Integer ->
+    ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar);
+dbiToREX i =
+  ForeignImports.LIT (ForeignImports.Var (ForeignImports.LVar "rEX" ForeignImports.LSortMsg i));
+
 restrConj ::
   [TamiglooDatatypes.RestrFormula] -> Maybe TamiglooDatatypes.RestrFormula;
 restrConj fs =
   (if Arith.equal_nat (List.size_list fs) Arith.zero_nat then Nothing
     else Just (List.foldr (TamiglooDatatypes.Conn ForeignImports.And)
                 (List.butlast fs) (List.last fs)));
+
+unwrapREX :: TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
+unwrapREX (TamiglooDatatypes.REX uu f) = unwrapREX f;
+unwrapREX (TamiglooDatatypes.Ato v) = TamiglooDatatypes.Ato v;
+unwrapREX (TamiglooDatatypes.Not v) = TamiglooDatatypes.Not v;
+unwrapREX (TamiglooDatatypes.Conn v va vb) = TamiglooDatatypes.Conn v va vb;
+
+wrapInREX ::
+  [ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar)] ->
+    TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
+wrapInREX [] f = f;
+wrapInREX (t : ts) f = TamiglooDatatypes.REX t (wrapInREX ts f);
+
+mappingREX ::
+  TamiglooDatatypes.Fact ->
+    [(Integer,
+       ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar))];
+mappingREX f =
+  let {
+    dbis =
+      GenericHelperFunctions.nub
+        (concat
+          (List.map_filter
+            (\ x -> (if isFAPP x then Just (getDbis x) else Nothing))
+            (TamiglooDatatypes.accTermList f)));
+  } in zip dbis (map dbiToREX dbis);
 
 replaceDbiLNTerm ::
   Integer ->
@@ -167,6 +212,7 @@ separateRestr (TamiglooDatatypes.Conn ForeignImports.Or va vb) =
   error "undefined";
 separateRestr (TamiglooDatatypes.Conn ForeignImports.Iff va vb) =
   error "undefined";
+separateRestr (TamiglooDatatypes.REX v va) = error "undefined";
 
 combineRestr ::
   (TamiglooDatatypes.Fact, TamiglooDatatypes.RestrFormula) ->
@@ -267,6 +313,20 @@ linearizeRestr restr =
             else snd sepNewRestr);
   } in combineRestr (fst sepNewRestr, rhs);
 
+createEqPatternREX ::
+  TamiglooDatatypes.Fact ->
+    TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
+createEqPatternREX actFact restrREX =
+  let {
+    defFactTerms =
+      TamiglooDatatypes.accTermList (fst (separateRestr (unwrapREX restrREX)));
+    actFactTerms = TamiglooDatatypes.accTermList actFact;
+    zipFAPPActDefTerms = filter (isFAPP . snd) (zip actFactTerms defFactTerms);
+    eqs = map (\ p ->
+                TamiglooDatatypes.Ato (TamiglooDatatypes.EqE (fst p) (snd p)))
+            zipFAPPActDefTerms;
+  } in Option.the (restrConj eqs);
+
 instantiationMapLNTerm ::
   ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar) ->
     ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar) ->
@@ -274,7 +334,7 @@ instantiationMapLNTerm ::
          ForeignImports.Term (ForeignImports.Lit ForeignImports.Name ForeignImports.LVar))];
 instantiationMapLNTerm (ForeignImports.LIT var) appTerm =
   [(getDbiLit (ForeignImports.LIT var), appTerm)];
-instantiationMapLNTerm (ForeignImports.FAPP fs ts) uu = error "undefined";
+instantiationMapLNTerm (ForeignImports.FAPP fs ts) uu = [];
 
 instantiationMap ::
   TamiglooDatatypes.Fact ->
@@ -288,13 +348,41 @@ instantiationMap dbiFact appFact =
   } in concatMap (GenericHelperFunctions.uncurry instantiationMapLNTerm)
          (zip dbiTermList appTermList);
 
+createRestrREX ::
+  TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
+createRestrREX restr =
+  let {
+    sepRestr = separateRestr restr;
+    rexMap = mappingREX (fst sepRestr);
+    a = List.fold (GenericHelperFunctions.uncurry replaceDbi) rexMap restr;
+  } in wrapInREX (GenericHelperFunctions.sndList rexMap) a;
+
+instantiateHasFAPP ::
+  TamiglooDatatypes.Fact ->
+    TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
+instantiateHasFAPP actFact linRestr =
+  let {
+    restrREX = createRestrREX linRestr;
+    eqsPattern = createEqPatternREX actFact restrREX;
+    unwrapRestrREX = separateRestr (unwrapREX restrREX);
+    restrREXwithEq =
+      TamiglooDatatypes.Conn ForeignImports.Imp eqsPattern (snd unwrapRestrREX);
+    instMap = instantiationMap (fst (separateRestr linRestr)) actFact;
+    instRestr = instantiateWithMapping instMap restrREXwithEq;
+    rexVars =
+      GenericHelperFunctions.sndList
+        (mappingREX (fst (separateRestr linRestr)));
+  } in wrapInREX rexVars instRestr;
+
 instantiateRestr ::
   TamiglooDatatypes.Fact ->
     TamiglooDatatypes.RestrFormula -> TamiglooDatatypes.RestrFormula;
-instantiateRestr f def = let {
-                           sepRestr = separateRestr def;
-                           instMap = instantiationMap (fst sepRestr) f;
-                         } in instantiateWithMapping instMap (snd sepRestr);
+instantiateRestr f def =
+  let {
+    sepRestr = separateRestr def;
+    instMap = instantiationMap (fst sepRestr) f;
+  } in (if hasFAPP (fst sepRestr) then instantiateHasFAPP f def
+         else instantiateWithMapping instMap (snd sepRestr));
 
 eqFactRestr :: TamiglooDatatypes.Fact -> TamiglooDatatypes.RestrFormula -> Bool;
 eqFactRestr f restr = TamiglooDatatypes.eqFactSig f (fst (separateRestr restr));
