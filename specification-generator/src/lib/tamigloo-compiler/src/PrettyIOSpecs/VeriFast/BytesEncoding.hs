@@ -6,7 +6,7 @@ module PrettyIOSpecs.VeriFast.BytesEncoding (
 
 
 import Prelude
-import qualified    Data.Map as Map
+-- import qualified    Data.Map as Map
 import qualified    Data.Set as S
 import qualified    Data.ByteString.Char8 as BC
 
@@ -16,8 +16,8 @@ import              Term.Term.Raw
 import              Term.Maude.Signature(MaudeSig, rrulesForMaudeSig, funSyms)
 import              Term.Term.FunctionSymbols
 import              Term.Builtin.Rules(RRule(..))
-import              Term.LTerm (frees)
-import              Term.VTerm(constsVTerm)
+-- import              Term.LTerm (frees)
+-- import              Term.VTerm(constsVTerm)
 --import              Term.Builtin.Convenience(x1, x2, x3)
 import              Theory.Model.Signature(_sigMaudeInfo)
 import qualified    Theory as T

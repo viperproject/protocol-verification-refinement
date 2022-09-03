@@ -11,13 +11,13 @@ module PrettyIOSpecs.VeriFast.IOSpecs (
   ) where
 
 import              Prelude
-import qualified    Data.Map as Map
+-- import qualified    Data.Map as Map
 import              Text.PrettyPrint.Class
 import              Data.List(delete)
-import              Data.List.Split
+-- import              Data.List.Split
 
 
-import qualified    Theory as T
+-- import qualified    Theory as T
 import qualified    Theory.Model.Formula as Form
 
 import qualified    TamiglooDatatypes as TID
@@ -37,7 +37,7 @@ prettyIOSpecs thy =
     map (\p -> (fst p, appTupel prettyIOSpecWithDef (snd p) (fst p)))  (IOS.extractIOSpec thy)
     where
         appTupel :: Document d => (b -> c -> (String -> d)) -> (a, (b, c)) -> (String -> d)
-        appTupel f (a, (b, c)) = f b c -- omit Psi
+        appTupel f (_, (b, c)) = f b c -- omit Psi
 
 -- pretty I/O spec
 prettyIOSpecWithDef :: Document d => (TID.IOSFormula, TID.IOSFormula) -> [(TID.IOSFormula, TID.IOSFormula)] -> String -> d
@@ -95,7 +95,8 @@ collectFa qs (TID.IOSFfa v formula) = collectFa (qs ++ [v]) formula
 collectFa qs _ = qs
 
 nameContainerConstr :: TID.IOSFormula -> String
-nameContainerConstr (TID.IOSFpred (TID.Pred name) ts) = GHF.prependToString "quant" name
+nameContainerConstr (TID.IOSFpred (TID.Pred name) _) = GHF.prependToString "quant" name
+nameContainerConstr _ = error "nameContainerConstr called with wrong arguments."
 
 
 
@@ -140,16 +141,16 @@ prettyVFIOSFormula :: Document d => TID.IOSFormula -> d
 prettyVFIOSFormula f =
     case f of
         TID.IOSFpred _ _ -> prettyIOSFpred f
-        TID.IOSFRestr f -> parens (prettyRestrForm f)
+        TID.IOSFRestr rf -> parens (prettyRestrForm rf)
         TID.IOSFand a b -> prettyVFIOSFormula a <> text " &&" $$ prettyVFIOSFormula b
         TID.IOSFimpl a b -> (prettyVFIOSFormula a) $$ (text "?") $$ parens (prettyVFIOSFormula b) $$ text ":" $$ text "true"
         TID.IOSFsepConj _ -> prettySepConj f
-        TID.IOSFex v inF -> prettyVFIOSFormula inF -- exists only occurs for vars in Permissions for which we use getters
+        TID.IOSFex _v inF -> prettyVFIOSFormula inF -- exists only occurs for vars in Permissions for which we use getters
         TID.IOSFfa v inF -> (connectFa [v] inF)
     where
         connectFa :: Document d => [TID.IOSTerm] -> TID.IOSFormula -> d
         connectFa qs (TID.IOSFfa v formula) = connectFa (qs ++ [v]) formula
-        connectFa qs formula = (prettyVFIOSFormula formula)
+        connectFa _qs formula = (prettyVFIOSFormula formula)
 
 
 
@@ -174,7 +175,7 @@ prettyRestrForm :: Document d => TID.RestrFormula -> d
 prettyRestrForm (TID.Ato atom) = prettyAtom atom
 prettyRestrForm (TID.Not f) = text "!(" <> prettyRestrForm f <> text ")"
 prettyRestrForm (TID.Conn conn l r) = prettyConn conn (parens (prettyRestrForm l)) (parens (prettyRestrForm r))
-prettyRestrForm (TID.RFA t f) = error "Patterns in definitions of restrictions not supported in VeriFast." -- text "(" <> (connectRFA [t] f) <> text ")"
+prettyRestrForm (TID.RFA _t _f) = error "Patterns in definitions of restrictions not supported in VeriFast." -- text "(" <> (connectRFA [t] f) <> text ")"
     {-
     where
         connectRFA :: Document d => [T.LNTerm] -> TID.RestrFormula -> d
@@ -212,11 +213,13 @@ prettyConn Form.Iff l r = l <> text " == " <> r
 prettySepConj :: Document d => TID.IOSFormula -> d
 prettySepConj (TID.IOSFsepConj ls) =
         (vcat . punctuate (text " &*&" ) $ map prettyVFIOSFormula ls)
+prettySepConj _ = error "prettySepConj called with wrong arguments."
 
 prettySepConjIterSepConj :: Document d => TID.IOSFormula -> d
 prettySepConjIterSepConj (TID.IOSFsepConj ls) =
         (vcat . punctuate (text " &*&" ) $
                 map (\l -> functionAppDoc (text "bigstar") [prettyVFIOSFormula l, text "nil"] ) ls)
+prettySepConjIterSepConj _ = error "prettySepConjIterSepConj called with wrong arguments."
 
 
 -- pred
@@ -240,6 +243,7 @@ prettyIOSFpred f@(TID.IOSFpred op ts) =
         auxMIn :: Document d => TID.IOSTerm -> TID.IOSTerm -> d
         auxMIn (TID.IOSTermFacts fIn) fs =
                 functionAppDocMLine (text "msetIn") [text (prettyFact True (head fIn)), (prettyVFIOSTerm True fs)]            
+        auxMIn _ _ = error "auxMIn of prettyIOSFpred called with wrong arguments."
 prettyIOSFpred _ = error "prettyIOSFpred not called with IOSFPred"
 
 

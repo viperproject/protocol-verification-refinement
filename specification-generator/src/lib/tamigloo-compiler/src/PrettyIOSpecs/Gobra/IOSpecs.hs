@@ -20,8 +20,8 @@ import qualified    IoSpecs as IOS
 -- import              Arith (integer_of_nat)
 
 import PrettyIOSpecs.Gobra.Utils
-import PrettyIOSpecs.Gobra.TermEncoding
-import PrettyIOSpecs.Gobra.FactEncoding
+-- import PrettyIOSpecs.Gobra.TermEncoding
+-- import PrettyIOSpecs.Gobra.FactEncoding
 import PrettyIOSpecs.Gobra.PermissionEncoding
 
 
@@ -47,7 +47,7 @@ prettyIOSpecs thy =
     map (\p -> (fst p, appTupel prettyIOSpecWithDef (snd p)))  (IOS.extractIOSpec thy)
     where
         appTupel :: Document d => (b -> c -> d) -> (a, (b, c)) -> d
-        appTupel f (a, (b, c)) = f b c -- omit Psi
+        appTupel f (_, (b, c)) = f b c -- omit Psi
 
 
 -- pretty I/O spec
@@ -75,11 +75,11 @@ prettyGobraIOSFormula :: Document d => TID.IOSFormula -> d
 prettyGobraIOSFormula f =
     case f of
         TID.IOSFpred _ _ -> prettyIOSFpred f
-        TID.IOSFRestr f -> parens (prettyRestrForm f)
+        TID.IOSFRestr rf -> parens (prettyRestrForm rf)
         TID.IOSFand a b -> prettyGobraIOSFormula a <> text " &&" $$ prettyGobraIOSFormula b
         TID.IOSFimpl a b -> parens (prettyGobraIOSFormula a) <> (text " ==>") $$ parens (prettyGobraIOSFormula b)
-        TID.IOSFsepConj l -> prettySepConj f
-        TID.IOSFex v inF -> prettyGobraIOSFormula inF -- exists only occurs for vars in Permissions for which we use getters
+        TID.IOSFsepConj _ -> prettySepConj f
+        TID.IOSFex _v inF -> prettyGobraIOSFormula inF -- exists only occurs for vars in Permissions for which we use getters
         TID.IOSFfa v inF -> (connectFa [v] inF)
     where
         {-
@@ -123,6 +123,7 @@ prettyGobraRestrs (TID.Theory _ _ thyItems) =
     where
         getRestrName :: TID.TheoryItem -> String
         getRestrName (TID.RestrItem name _) = name
+        getRestrName _ = error "getRestrName called with wrong arguments."
 
 prettyRestrForm :: Document d => TID.RestrFormula -> d
 prettyRestrForm (TID.Ato atom) = prettyAtom atom
@@ -151,7 +152,6 @@ showConn Form.Imp = " ==> "
 showConn Form.Iff = " == "
 
 
-
 prettySepConj :: Document d => TID.IOSFormula -> d
 prettySepConj (TID.IOSFsepConj ls) =
     if TID.isPerm (head ls)
@@ -163,11 +163,12 @@ prettySepConj (TID.IOSFsepConj ls) =
         )
     else
         (vcat . punctuate (text " &&" ) $ map prettyGobraIOSFormula ls)
+prettySepConj _ = error "prettySepConj called with wrong arguments."
 
 
 prettyPredUsingGetters :: Document d => TID.IOSFormula -> TID.IOSFormula -> d
-prettyPredUsingGetters perm (TID.IOSFpred (TID.Pred name) ts) =
-    functionAppDoc (text name) (map (prettyGobraIOSTermGeneric (prettyLNTermGetPerm perm)) ts)
+prettyPredUsingGetters permission (TID.IOSFpred (TID.Pred name) ts) =
+    functionAppDoc (text name) (map (prettyGobraIOSTermGeneric (prettyLNTermGetPerm permission)) ts)
     where
         isGetter :: TID.IOSFormula -> T.LNTerm -> Bool
         isGetter perm term = Map.member term (mappingRetTermsGetterTerms perm)
@@ -182,11 +183,7 @@ prettyPredUsingGetters perm (TID.IOSFpred (TID.Pred name) ts) =
             if isGetter perm term
             then wrapFreshPub True (sortOfGetter perm term) $ prettyGobraLNTerm False term
             else prettyGobraLNTerm True term
-
-        
-
-
-
+prettyPredUsingGetters _ _ = error "prettyPredUsingGetters called with wrong arguments."
 
 prettyIOSFpred :: Document d => TID.IOSFormula -> d
 prettyIOSFpred f@(TID.IOSFpred op ts) =
@@ -208,7 +205,7 @@ prettyIOSFpred f@(TID.IOSFpred op ts) =
             (text $ prettyFact True (head fIn)) <> 
             text (" " ++ opName ++ " ") <> 
             (prettyGobraIOSTerm True fs)
-            
+        auxMIn _ _ _ = error "auxMIn of prettyIOSFpred called with wrong arguments."
 prettyIOSFpred _ = error "prettyIOSFpred not called with IOSFPred"
 
 

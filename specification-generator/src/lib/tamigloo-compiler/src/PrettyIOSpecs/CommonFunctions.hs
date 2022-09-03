@@ -72,18 +72,22 @@ expectsBin ts b =
 -- gives the return values (input values) of a permission
 permReturnTerms :: TID.IOSFormula -> [TID.IOSTerm]
 permReturnTerms (TID.IOSFpred pOp ts) = listPermReturnTerms pOp ts
+permReturnTerms _ = error "permReturnTerms called with wrong arguments."
 
 listPermReturnTerms :: TID.PredOpId -> [a] -> [a]
 listPermReturnTerms (TID.Perm TID.In_RF _) ts = tail (tail ts) -- everything except src place and rid
 listPermReturnTerms (TID.Perm _ _) ts = [last ts] -- target place
+listPermReturnTerms _ _ = error "listPermReturnTerms called with wrong arguments."
 
 -- gives the arguments (output values) of a permission
 permArgTerms :: TID.IOSFormula -> [TID.IOSTerm]
 permArgTerms (TID.IOSFpred pOp ts) = listPermArgTerms pOp ts
+permArgTerms _ = error "permArgTerms called with wrong arguments."
 
 listPermArgTerms :: TID.PredOpId -> [a] -> [a]
 listPermArgTerms (TID.Perm TID.In_RF _) ts = take 2 ts
 listPermArgTerms (TID.Perm _ _) ts = init ts
+listPermArgTerms _ _ = error "listPermArgTerms called with wrong arguments."
 
 
 

@@ -6,7 +6,7 @@ module Main.Mode.TamiglooMain (
   ) where
 
 import              Prelude   
-import              Theory.Text.Pretty
+-- import              Theory.Text.Pretty
 import qualified Text.PrettyPrint.Class          as Pretty
 --import              System.FilePath
 --import              Theory.Text.Parser.Token(parseFile)
@@ -17,14 +17,12 @@ import              Main.TheoryLoader(loadOpenThy)
 import qualified    Theory as T            
 import              TamarinToTamigloo
 import              TamiglooConfig
-import qualified    TamiglooDatatypes as TID
+-- import qualified    TamiglooDatatypes as TID
 
 -- import              PrettyIOSpecs.PrettyDebug as Debug
 import qualified    PrettyIOSpecs.Gobra.Content as Gobra
 
 import qualified    PrettyIOSpecs.VeriFast.Content as VF
-
-
 
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath

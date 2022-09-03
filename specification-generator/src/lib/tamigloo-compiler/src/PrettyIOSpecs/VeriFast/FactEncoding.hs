@@ -7,7 +7,7 @@ module PrettyIOSpecs.VeriFast.FactEncoding (
 
 --
 import              Prelude
-import qualified    Data.Map as Map
+-- import qualified    Data.Map as Map
 
 -- Tamarin prover imports
 import              Text.PrettyPrint.Class

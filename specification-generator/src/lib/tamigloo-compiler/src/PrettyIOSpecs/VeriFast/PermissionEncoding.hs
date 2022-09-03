@@ -14,15 +14,15 @@ module PrettyIOSpecs.VeriFast.PermissionEncoding (
 
 --
 import              Prelude
-import qualified    Data.Map as Map
-import              Data.Maybe(isJust)
-import              Data.List(elemIndex)
-import qualified    Data.ByteString.Char8 as BC
+-- import qualified    Data.Map as Map
+-- import              Data.Maybe(isJust)
+-- import              Data.List(elemIndex)
+-- import qualified    Data.ByteString.Char8 as BC
 
 -- Tamarin prover imports
 import              Text.PrettyPrint.Class
-import qualified    Theory as T
-import              Term.LTerm(sortOfLNTerm)
+-- import qualified    Theory as T
+-- import              Term.LTerm(sortOfLNTerm)
 -- Tamigloo imports
 -- ---- isabelle generated
 import              GenericHelperFunctions(nubBy)
@@ -79,7 +79,7 @@ permEncoding formulas permType =
 
         -- encoding of a single permission
 singlePerm :: Document d => TID.IOSFormula -> d
-singlePerm p@(TID.IOSFpred (TID.Perm permType name) _) =
+singlePerm p@(TID.IOSFpred (TID.Perm permType _name) _) =
     let
         def = 
             (permDef p) -- perm
@@ -89,17 +89,19 @@ singlePerm p@(TID.IOSFpred (TID.Perm permType name) _) =
             TID.Internal_R -> def <> text "\n" $$ (internBIO p)
             TID.In_RF -> def) <>
         text "\n\n"
+singlePerm _ = error "singlePerm called with wrong arguments."
 
 -- definition of a permission (permission encoding)
 permDef :: Document d => TID.IOSFormula -> d
-permDef p@(TID.IOSFpred (TID.Perm _ name) ts) =
+permDef (TID.IOSFpred (TID.Perm _ name) ts) =
     let
         termsWithType = map (\t -> text (printTypeOfIOSTerm t) <> text " " <> (prettyVFIOSTerm False) t) ts
     in
         text "predicate " <> functionAppDoc (text name) termsWithType <> text ";"
+permDef _ = error "permDef called with wrong arguments."
 
 permAppQ :: Document d => TID.IOSFormula -> d
-permAppQ p@(TID.IOSFpred (TID.Perm permType name) ts) =
+permAppQ (TID.IOSFpred (TID.Perm permType name) ts) =
     let
         pOp = (TID.Perm permType name)
         termDocs = map (prettyVFIOSTerm False) ts
@@ -109,6 +111,7 @@ permAppQ p@(TID.IOSFpred (TID.Perm permType name) ts) =
         retsQ = map (\r -> text "?" <> r) rets
     in
         functionAppDoc (text name) (args ++ retsQ)
+permAppQ _ = error "permAppQ called with wrong arguments."
 
 -- definition of an internal basic input output operation
 internBIO :: Document d => TID.IOSFormula -> d
@@ -132,3 +135,4 @@ internBIO p@(TID.IOSFpred (TID.Perm TID.Internal_R name) ts) =
             (text "token(" <> placeSrc <> text ") &*& " <> permApp)
             (text "token(" <> placeDst <> text ")")
             (text "assume(false);")
+internBIO _ = error "internBIO called with wrong arguments."

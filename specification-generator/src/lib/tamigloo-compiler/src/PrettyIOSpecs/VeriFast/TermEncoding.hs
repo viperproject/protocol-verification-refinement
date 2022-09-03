@@ -20,13 +20,13 @@ import qualified    Data.Set as S
 import qualified    Data.ByteString.Char8 as BC
 -- Tamarin prover imports
 import              Text.PrettyPrint.Class
-import              Term.Term.Raw
+-- import              Term.Term.Raw
 import              Term.Maude.Signature(MaudeSig, rrulesForMaudeSig, funSyms)
 import              Term.Term.FunctionSymbols
-import              Term.Builtin.Rules(RRule(..))
+-- import              Term.Builtin.Rules(RRule(..))
 import              Term.LTerm (frees)
-import              Term.VTerm(constsVTerm)
-import              Term.Builtin.Convenience(x1, x2, x3)
+-- import              Term.VTerm(constsVTerm)
+-- import              Term.Builtin.Convenience(x1, x2, x3)
 import              Theory.Model.Signature(_sigMaudeInfo)
 import qualified    Theory as T
 -- Tamigloo imports
@@ -93,6 +93,7 @@ funcACLemmas ppACLemma fSyms =
 
 ppACLemmas :: Document d => FunSym -> d
 ppACLemmas (AC o) = nameACLemmas "Term" (reservedVeriFastWords (show o))
+ppACLemmas _ = error "ppACLemmas called with wrong arguments."
 
 nameACLemmas :: Document d => String -> String -> d
 nameACLemmas typeId name =
