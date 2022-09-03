@@ -1,6 +1,8 @@
 module PrettyIOSpecs.Gobra.Utils (
 
         reservedGobraWords
+
+    ,   prettyLit
     ,   prettyGobraLNTerm
     ,   prettyGobraLNTermWithType
     ,   prettyGobraIOSTerm
@@ -10,6 +12,7 @@ module PrettyIOSpecs.Gobra.Utils (
 
     ,   exists
     ,   forallWithTriggerSetting
+    ,   forallWithTriggerSettingInline
 
     ,   axiom
     ,   prettyFact
@@ -319,13 +322,17 @@ domain name doc =
 
 forallWithTriggerSetting :: Document d => TriggerSetting -> d -> [d] -> d -> d
 forallWithTriggerSetting =
-    quantifiedWithTriggerSetting "forall"
+    quantifiedWithTriggerSetting False "forall"
+
+forallWithTriggerSettingInline :: Document d => TriggerSetting -> d -> [d] -> d -> d
+forallWithTriggerSettingInline =
+    quantifiedWithTriggerSetting True "forall"
 
 exists :: Document d => d -> d -> d
-exists termsWithType body = quantifiedWithTriggerSetting "exists" None termsWithType [] body
+exists termsWithType body = quantifiedWithTriggerSetting False "exists" None termsWithType [] body
 
-quantifiedWithTriggerSetting :: Document d => String -> TriggerSetting -> d -> [d] -> d -> d
-quantifiedWithTriggerSetting quant triggerSetting termsWithType triggers body =
+quantifiedWithTriggerSetting :: Document d => Bool -> String -> TriggerSetting -> d -> [d] -> d -> d
+quantifiedWithTriggerSetting inline quant triggerSetting termsWithType triggers body =
     let
         triggs = 
             if (length triggers) == 0 || triggerSetting == None
@@ -336,7 +343,9 @@ quantifiedWithTriggerSetting quant triggerSetting termsWithType triggers body =
                 else triggers 
             )
     in
-        quantified quant termsWithType triggs body
+        if inline
+        then quantifiedInline quant termsWithType triggs body
+        else quantified quant termsWithType triggs body
 
 quantified :: Document d => String -> d -> [d] -> d -> d
 quantified quant termsWithType triggers body =
@@ -348,6 +357,16 @@ quantified quant termsWithType triggers body =
             bracedTriggers <> text " (" $$
             nest 4 body <> text ")"
         )
+
+quantifiedInline :: Document d => String -> d -> [d] -> d -> d
+quantifiedInline quant termsWithType triggers body =
+    let
+        bracedTriggers = (hcat $ punctuate (text " ") $ map bracesInline triggers)
+    in
+        text (quant ++ " ") <> termsWithType <> text " :: " <>
+        bracedTriggers <> text " (" <>
+        body <> text ")"
+
 
 axiom :: Document d => d -> d
 axiom body = braces' (text "axiom ") body
