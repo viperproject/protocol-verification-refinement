@@ -166,11 +166,6 @@ dbiToBoundLNTerm i =
 getDbiLitsPerFactArg :: TamiglooDatatypes.Fact -> [[Integer]];
 getDbiLitsPerFactArg f = map getDbis (TamiglooDatatypes.accTermList f);
 
-flipEnumInt :: forall a. Arith.Nat -> [a] -> [(a, Integer)];
-flipEnumInt i ls =
-  map (\ p -> (snd p, Arith.integer_of_nat (fst p)))
-    (GenericHelperFunctions.enum i ls);
-
 perArgMapping :: TamiglooDatatypes.Fact -> [[(Integer, Integer)]];
 perArgMapping f =
   let {
@@ -185,7 +180,7 @@ perArgMapping f =
         (List.butlast
           (GenericHelperFunctions.scanl Arith.plus_nat Arith.zero_nat lens));
     a = zip minBounds (getDbiLitsPerFactArg f);
-  } in map (\ p -> flipEnumInt (fst p) (snd p)) a;
+  } in map (\ p -> GenericHelperFunctions.flipEnumInt (fst p) (snd p)) a;
 
 factToDistinctDbis :: TamiglooDatatypes.Fact -> TamiglooDatatypes.Fact;
 factToDistinctDbis (TamiglooDatatypes.Fact fg ft ts) =
@@ -257,8 +252,8 @@ mappingDbis restr =
         (List.foldr (\ a -> filter (\ b -> a == b))
           (GenericHelperFunctions.fstList catPerArg) dbisRhs);
     _ = map (\ p -> (fst p, [snd p]))
-          (flipEnumInt (Arith.plus_nat maxDbisLhs Arith.one_nat)
-            dbisRhsNotInFact);
+          (GenericHelperFunctions.flipEnumInt
+            (Arith.plus_nat maxDbisLhs Arith.one_nat) dbisRhsNotInFact);
     mergedArgMapping = GenericHelperFunctions.sortIntoBuckets catPerArg;
   } in mergedArgMapping;
 

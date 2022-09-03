@@ -3,9 +3,10 @@
 module
   GenericHelperFunctions(anya, nubBy, nub, enum, scanl, isSome, fstList,
                           sndList, uncurry, zipWith, flipPair, collectThe,
-                          stringOfNat, splitAndGetFst, splitAndGetSnd,
-                          prependToString, sortIntoBucketsOrdered,
-                          sortIntoBuckets, stringOfInteger)
+                          enumIntZero, flipEnumInt, stringOfNat, splitAndGetFst,
+                          splitAndGetSnd, flipEnumIntZero, prependToString,
+                          sortIntoBucketsOrdered, sortIntoBuckets,
+                          stringOfInteger)
   where {
 
 import Prelude ((==), (/=), (<), (<=), (>=), (>), (+), (-), (*), (/), (**),
@@ -51,6 +52,9 @@ isSome :: forall a. Maybe a -> Bool;
 isSome (Just uu) = True;
 isSome Nothing = False;
 
+enumInt :: forall a. Arith.Nat -> [a] -> [(Integer, a)];
+enumInt i xs = map (\ p -> (Arith.integer_of_nat (fst p), snd p)) (enum i xs);
+
 fstList :: forall a b. [(a, b)] -> [a];
 fstList pairList = fst (unzip pairList);
 
@@ -86,6 +90,12 @@ collectThe :: forall a. [Maybe a] -> [a];
 collectThe asa =
   List.map_filter (\ x -> (if isSome x then Just (Option.the x) else Nothing))
     asa;
+
+enumIntZero :: forall a. [a] -> [(Integer, a)];
+enumIntZero ls = enumInt Arith.zero_nat ls;
+
+flipEnumInt :: forall a. Arith.Nat -> [a] -> [(a, Integer)];
+flipEnumInt i ls = map flipPair (enumInt i ls);
 
 revDigitsOfNumber :: Arith.Nat -> [Arith.Nat];
 revDigitsOfNumber i =
@@ -129,6 +139,9 @@ splitAndGetSnd s =
     ((snd . auxSplit [])
       (map (let ord k | (k < 128) = Prelude.toInteger k in ord . (Prelude.fromEnum :: Prelude.Char -> Prelude.Int))
         s));
+
+flipEnumIntZero :: forall a. [a] -> [(a, Integer)];
+flipEnumIntZero ls = flipEnumInt Arith.zero_nat ls;
 
 prependToString :: String -> String -> String;
 prependToString first second =
