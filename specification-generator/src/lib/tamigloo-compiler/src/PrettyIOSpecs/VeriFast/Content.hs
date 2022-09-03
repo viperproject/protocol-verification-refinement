@@ -26,6 +26,7 @@ import PrettyIOSpecs.VeriFast.TermEncoding
 import PrettyIOSpecs.VeriFast.FactEncoding
 import PrettyIOSpecs.VeriFast.PermissionEncoding
 import PrettyIOSpecs.VeriFast.IOSpecs
+import PrettyIOSpecs.VeriFast.BytesEncoding
 
 content:: Document d => Map.Map String String -> TID.Theory -> [(FilePath, d)]
 content = generatePathsWithContent
@@ -44,6 +45,7 @@ generatePathsWithContent config tamiThy =
             , dirPath config "fact" "fact" ["fresh", "pub", "term"] (veriFastFactEncoding tamiThy) -- maybe add multiset encoding here
             , dirPath config "claim" "claim" ["fresh", "pub", "term"] (veriFastClaimEncoding tamiThy)
             , dirPath config "place" "place" [] (veriFastPlaceEncoding)
+            , dirPath config "bytes" "bytes" ["pub", "term"] (veriFastBytesEncoding tamiThy)
             ]
         permissions = concat $
             [ dirPath config "iospec" "permissions_out" ["place", "fresh", "pub", "term"] (veriFastOutPermissions tamiThy)

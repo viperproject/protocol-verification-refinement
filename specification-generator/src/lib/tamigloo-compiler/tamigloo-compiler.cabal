@@ -67,6 +67,7 @@ library
       PrettyIOSpecs.VeriFast.MultiSetEncoding
       PrettyIOSpecs.VeriFast.Utils
       PrettyIOSpecs.VeriFast.Content
+      PrettyIOSpecs.VeriFast.BytesEncoding
       
 
       DerivingInstances
