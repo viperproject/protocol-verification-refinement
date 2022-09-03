@@ -35,24 +35,6 @@ content config tamiThy =
     then (generatePathsWithContent config tamiThy)
     else tail (generatePathsWithContent config tamiThy)
 
-filePathRel :: String -> String
-filePathRel name = name </> (name ++ ".gobra")
-
-filePathBase :: Map.Map String String -> String -> String
-filePathBase config name = config Map.! "base_dir" </> (filePathRel name)
-
-modNames :: [String]
-modNames =             
-    [ "place"
-    , "fresh"
-    , "pub"
-    , "term"
-    , "bytes"
-    , "claim"
-    , "fact"
-    , "iospec"
-    ]
-
 generatePathsWithContent :: Document d => Map.Map String String -> TID.Theory -> [(String, d)]
 generatePathsWithContent config tamiThy =
     goMod ++
@@ -64,13 +46,13 @@ generatePathsWithContent config tamiThy =
     where
         encodings :: Document d => [(String, d)]
         encodings =
-            [ (filePathBase config "place", gobraPlaceEncoding config)
-            , (filePathBase config "fresh", gobraFreshEncoding config)
-            , (filePathBase config "pub", gobraPubEncoding config tamiThy)
-            , (filePathBase config "term", gobraTermEncoding config tamiThy)
-            , (filePathBase config "bytes", gobraBytesEncoding config tamiThy)
-            , (filePathBase config "claim", gobraClaimEncoding config tamiThy)
-            , (filePathBase config "fact", gobraFactEncoding config tamiThy)
+            [ (gobraFilePathBase config "place", gobraPlaceEncoding config)
+            , (gobraFilePathBase config "fresh", gobraFreshEncoding config)
+            , (gobraFilePathBase config "pub", gobraPubEncoding config tamiThy)
+            , (gobraFilePathBase config "term", gobraTermEncoding config tamiThy)
+            , (gobraFilePathBase config "bytes", gobraBytesEncoding config tamiThy)
+            , (gobraFilePathBase config "claim", gobraClaimEncoding config tamiThy)
+            , (gobraFilePathBase config "fact", gobraFactEncoding config tamiThy)
             ]
         permissions :: Document d => [(String, d)]
         permissions =
@@ -108,7 +90,7 @@ generatePathsWithContent config tamiThy =
 readMeFile :: Document d => Map.Map String String -> [(String, d)] -> [(String, d)] -> d
 readMeFile config perms ios =
     let
-        relPaths = map filePathRel modNames
+        relPaths = map gobraFilePathRel modNames
 
     in
         text "Running the following commands from the base directory (directory where the readme resides) will verify the respective generated encoding using the provided Gobra jar." $$

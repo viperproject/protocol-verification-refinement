@@ -1,6 +1,9 @@
 module PrettyIOSpecs.Gobra.Utils (
 
-        reservedGobraWords
+        gobraFilePathRel
+    ,   gobraFilePathBase
+    ,   modNames
+    ,   reservedGobraWords
 
     ,   prettyLit
     ,   prettyGobraLNTerm
@@ -38,6 +41,7 @@ module PrettyIOSpecs.Gobra.Utils (
 import              Prelude
 import qualified    Data.Map as Map
 import qualified    Data.ByteString.Char8 as BC
+import              System.FilePath
 
 -- Tamarin prover imports
 import              Text.PrettyPrint.Class
@@ -58,7 +62,23 @@ import qualified    IoSpecs as IOS
 import DerivingInstances()
 import PrettyIOSpecs.CommonFunctions
 
+gobraFilePathRel :: String -> String
+gobraFilePathRel name = name </> (name ++ ".gobra")
 
+gobraFilePathBase :: Map.Map String String -> String -> String
+gobraFilePathBase config name = config Map.! "base_dir" </> (gobraFilePathRel name)
+
+modNames :: [String]
+modNames =             
+    [ "place"
+    , "fresh"
+    , "pub"
+    , "term"
+    , "bytes"
+    , "claim"
+    , "fact"
+    , "iospec"
+    ]
 
 data TriggerSetting = None | Lhs | All
     deriving (Prelude.Read, Prelude.Show, Prelude.Eq)
