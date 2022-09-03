@@ -52,6 +52,8 @@ reservedVeriFastWords s =
     case s of
         _ | s == "true" -> "ok"
         _ | s == "pair" -> "paired"
+        _ | s == "fst" -> "fstTerm"
+        _ | s == "snd" -> "sndTerm"
         _ -> id s 
 
 printTypeOfLNTerm :: T.LNTerm -> String
