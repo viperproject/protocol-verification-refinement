@@ -18,7 +18,7 @@ module PrettyIOSpecs.CommonFunctions (
         ,   functionApp
         ,   functionDef
         ,   joinString
-        ,   enum
+      --  ,   enum
         ,   sepTerms
         ,   bracesInline
 
@@ -110,9 +110,10 @@ joinString delimiter args =
         [a] -> a
         (a:b:as) -> a ++ delimiter ++ joinString delimiter (b:as) 
 
+{-
 enum :: [a] -> [(a,Integer)]
 enum ls = zip ls [0..]
-
+-}
 sepTerms :: Document d => [d] -> d
 sepTerms ds =  (hcat $ punctuate (text ", ") ds)
 

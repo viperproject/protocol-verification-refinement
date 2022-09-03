@@ -14,7 +14,7 @@ import              Text.PrettyPrint.Class
 
 -- Tamigloo imports
 -- ---- isabelle generated
-import              GenericHelperFunctions(nubBy)
+import              GenericHelperFunctions(nubBy, flipEnumIntZero)
 import qualified    TamiglooDatatypes as TID
 import qualified    IoSpecs as IOS
 -- ---- other Tamigloo modules
@@ -35,9 +35,9 @@ gobraFactEncoding config tamiThy =
         factEncoding :: Document d => [TID.Fact] -> d
         factEncoding fs =
             (vcat $ punctuate (text "\n") $
-                map (uncurry singleFactEncoding) (enum fs)) <>
+                map (uncurry singleFactEncoding) (flipEnumIntZero  fs)) <>
             text "\n" $$
-            persistentFunc (enum fs)
+            persistentFunc (flipEnumIntZero  fs)
         collectFactsIOSFormulas :: [TID.IOSFormula] -> [TID.Fact]
         collectFactsIOSFormulas fs = nubBy TID.eqFactSig $ concat $ map (TID.getFactsFromFormula TID.getFactsFromIOSTerm) fs
         getDefsFromIOSpecs :: TID.Theory -> [TID.IOSFormula]
