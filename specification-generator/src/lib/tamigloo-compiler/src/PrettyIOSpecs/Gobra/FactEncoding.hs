@@ -24,7 +24,7 @@ import              PrettyIOSpecs.Gobra.Utils
 
 gobraFactEncoding :: Document d => Map.Map String String -> TID.Theory -> d
 gobraFactEncoding config tamiThy =
-    gobraHeader config "fact" ["mod_term", "mod_pub", "mod_fresh"] (
+    gobraHeader config "fact" ["term", "pub", "fresh"] (
         domain "Fact" (
             factEncoding (collectFactsIOSFormulas . getDefsFromIOSpecs $ tamiThy) <>
             (text "\n") 
@@ -47,7 +47,7 @@ gobraFactEncoding config tamiThy =
 
 gobraClaimEncoding :: Document d => Map.Map String String -> TID.Theory -> d
 gobraClaimEncoding config tamiThy =
-    gobraHeader config "claim" ["mod_term"] (
+    gobraHeader config "claim" ["term"] (
         domain "Claim" (
             claimEncoding (collectClaimsIOSFormulas . getDefsFromIOSpecs $ tamiThy) <>
             (text "\n")

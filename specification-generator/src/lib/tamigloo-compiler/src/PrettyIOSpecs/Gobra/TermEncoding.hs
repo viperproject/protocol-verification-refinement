@@ -41,7 +41,7 @@ gobraTermEncoding config (TID.Theory _thyName fsig _thyItems) =
         -- assume maudeSig has been used appropriately to initialize funSyms
         sigMaude = ( _sigMaudeInfo fsig)
     in
-        gobraHeader config "term" ["mod_pub", "mod_fresh"] (
+        gobraHeader config "term" ["pub", "fresh"] (
             domain "Term" (
                 baseTermEncoding $$
                 termFuncEncoding sigMaude $$

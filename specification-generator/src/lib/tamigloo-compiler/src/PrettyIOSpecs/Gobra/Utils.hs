@@ -315,10 +315,10 @@ showTamiFactTag ft = case ft of
 {- Formatting -}
 
 gobraHeader :: Document d => Map.Map String String -> String -> [String] -> d -> d
-gobraHeader config packageName importKeys spec = 
+gobraHeader config packageName importedPackages spec = 
     packageHeader packageName $$
     (text "\n") $$
-    importHeader config importKeys $$
+    importHeader config importedPackages $$
     (text "\n") $$
     spec
 
@@ -329,8 +329,8 @@ packageHeader package_name =
     )
 
 importHeader :: Document d => Map.Map String String -> [String] -> d
-importHeader config mod_keys =
-    vcat $ map (text . ("import . " ++)) $ map (quotes' . (config Map.!)) mod_keys 
+importHeader config importedPackages =
+    vcat $ map (text . ("import . " ++)) $ map (\i -> quotes' $ config Map.! "module" </> i) importedPackages 
     where
         quotes' :: String -> String
         quotes' s = "\""++s++"\""

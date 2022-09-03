@@ -39,7 +39,7 @@ gobraIOSpecs config thy =
     header :: Document d => d -> d
     header spec = 
       gobraHeader config "iospec"
-        ["mod_claim", "mod_fact", "mod_term", "mod_place", "mod_pub", "mod_fresh"]
+        ["claim", "fact", "term", "place", "pub", "fresh"]
         spec
         
 prettyIOSpecs :: Document d => TID.Theory -> [(String, d)]

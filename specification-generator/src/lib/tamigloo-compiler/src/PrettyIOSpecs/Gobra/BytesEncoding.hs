@@ -42,7 +42,7 @@ gobraBytesEncoding config thy@(TID.Theory _thyName fsig _thyItems) =
         -- assume maudeSig has been used appropriately to initialize funSyms
         sigMaude = ( _sigMaudeInfo fsig)
     in
-        gobraHeader config "bytes" ["mod_pub", "mod_term"] (
+        gobraHeader config "bytes" ["pub", "term"] (
             domain "Bytes" (
                 baseEncoding $$
                 constEncoding thy $$

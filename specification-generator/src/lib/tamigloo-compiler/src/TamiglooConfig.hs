@@ -4,49 +4,22 @@ module TamiglooConfig(
         defaultConfig
     ,   tamiglooReadConfig
 
-    ,   defaultRelativeModules
 
 
 ) where
 
 import              Prelude
 import qualified    Data.Map as Map
-import              System.FilePath
+-- import              System.FilePath
 
 -- Takes the inputConfig from user and fills up unspecified options with the defaults
 -- Also calculates the paths for import statements, etc and adds them to config
 -- A minimal working input config needs to contain the base_dir and input_file key
 defaultConfig :: Map.Map String String -> Map.Map String String
 defaultConfig inputConfig =
-    let 
-        -- Map.union is left-biased: in case of duplicates left value is kept
-        -- add default options if not specified
-        config = Map.union inputConfig defaultOptions
-    in
-        Map.union 
-            config
-            (defaultModules config) -- add package names for input 
-
--- package names with modules prefix. Used for import statements
-defaultModules :: Map.Map String String -> Map.Map String String
-defaultModules config =
-    let
-        baseMod = config Map.! "module"
-    in
-        Map.map (baseMod </>) defaultRelativeModules
-
--- package names
-defaultRelativeModules :: Map.Map String String
-defaultRelativeModules = 
-    Map.fromList(
-        [ ("mod_iospec", "iospec")
-        , ("mod_claim", "claim")
-        , ("mod_fact", "fact")
-        , ("mod_term", "term")
-        , ("mod_place", "place")
-        , ("mod_pub", "pub")
-        , ("mod_fresh", "fresh")
-        ])
+    -- Map.union is left-biased: in case of duplicates left value is kept
+    -- add default options if not specified
+    Map.union inputConfig defaultOptions
 
 -- supported options
 defaultOptions :: Map.Map String String

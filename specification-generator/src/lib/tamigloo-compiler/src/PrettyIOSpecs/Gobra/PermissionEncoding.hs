@@ -49,7 +49,7 @@ gobraInternalPermissions config thy =
         header :: Document d => d -> d
         header body =
             gobraHeader config "iospec"
-                ["mod_claim", "mod_fact", "mod_term", "mod_place", "mod_pub", "mod_fresh"]
+                ["claim", "fact", "term", "place", "pub", "fresh"]
                 body
 
 {- internal permissions -}
@@ -73,7 +73,7 @@ gobraOutPermissions config thy =
             concatMap (\inp -> map snd $ IOS.getAbsPhisWithDef (snd inp)) (IOS.extractIOSpec thy)
     in
         gobraHeader config "iospec"
-            ["mod_claim", "mod_fact", "mod_term", "mod_place", "mod_pub", "mod_fresh"]
+            ["claim", "fact", "term", "place", "pub", "fresh"]
         (
             vcat $ permEncoding formulas TID.Out_RG
         )
@@ -85,7 +85,7 @@ gobraInPermissions config thy =
             concatMap (\inp -> map snd $ IOS.getAbsPhisWithDef (snd inp)) (IOS.extractIOSpec thy)
     in
         gobraHeader config "iospec"
-            ["mod_claim", "mod_fact", "mod_term", "mod_place", "mod_pub", "mod_fresh"]
+            ["claim", "fact", "term", "place", "pub", "fresh"]
         (
             vcat $ permEncoding formulas TID.In_RF
         )
