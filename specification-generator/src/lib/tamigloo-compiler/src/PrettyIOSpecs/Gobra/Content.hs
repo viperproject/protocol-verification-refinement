@@ -24,6 +24,7 @@ import PrettyIOSpecs.Gobra.TermEncoding
 import PrettyIOSpecs.Gobra.FactEncoding
 import PrettyIOSpecs.Gobra.PermissionEncoding
 import PrettyIOSpecs.Gobra.IOSpecs
+import PrettyIOSpecs.Gobra.BytesEncoding
 
 
 
@@ -45,14 +46,15 @@ generatePathsWithContent config tamiThy =
     where
         encodings :: Document d => [(String, d)]
         encodings =
-            map (\p -> (config Map.! (fst p), snd p)) $
+            (map (\p -> (config Map.! (fst p), snd p)) $
             [ ("path_claim", gobraClaimEncoding config tamiThy)
             , ("path_fact", gobraFactEncoding config tamiThy)
             , ("path_term", gobraTermEncoding config tamiThy)
             , ("path_place", gobraPlaceEncoding config)
             , ("path_pub", gobraPubEncoding config tamiThy)
             , ("path_fresh", gobraFreshEncoding config)
-            ]
+            ]) ++
+            [(config Map.! "base_dir" </> "bytes/bytes.gobra", gobraBytesEncoding config tamiThy)]
         permissions :: Document d => [(String, d)]
         permissions =
             let

@@ -58,6 +58,7 @@ library
       PrettyIOSpecs.Gobra.TermEncoding
       PrettyIOSpecs.Gobra.FactEncoding
       PrettyIOSpecs.Gobra.Content
+      PrettyIOSpecs.Gobra.BytesEncoding
 
       PrettyIOSpecs.VeriFast.TermEncoding
       PrettyIOSpecs.VeriFast.FactEncoding
