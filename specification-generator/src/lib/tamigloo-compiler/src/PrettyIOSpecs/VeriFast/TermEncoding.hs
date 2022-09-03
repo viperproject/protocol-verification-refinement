@@ -7,6 +7,12 @@ module PrettyIOSpecs.VeriFast.TermEncoding (
         , veriFastPubEncoding
         , veriFastFreshEncoding
         , veriFastPlaceEncoding
+
+
+        , funcDecls
+        , funcACLemmas
+        , nameACLemmas
+        , ppRRule
   ) where
 
 import Prelude
@@ -50,61 +56,65 @@ veriFastTermEncoding (TID.Theory _thyName fsig _thyItems) =
         text "fixpoint Term freshTerm(Fresh f);" $$
         text "fixpoint Term pubTerm(Pub p);" $$ text "\n\n" $$
         text "// Function declarations" $$
-        (funcDecls funcSyms) $$
+        (funcDecls "Term" funcSyms) $$
         text "\n\n" $$
-        nest 4 (funcACLemmas funcSyms) $$
+        nest 4 (funcACLemmas ppACLemmas funcSyms) $$
         text "\n\n" $$
         nest 4 (eqEncoding sigMaude)
 
 
-funcDecls :: Document d => [FunSym] -> d
-funcDecls fSyms =
+funcDecls :: Document d => String -> [FunSym] -> d
+funcDecls typeId fSyms =
     vcat $ map ppFunSym fSyms
     where
         ppFunSym :: Document d => FunSym -> d
         ppFunSym (NoEq (f, (ar, _))) = 
             -- we do not make a distinction between private and public since we don't consider the adversary
             let 
-                args = map ((++) "Term ") (convenienceNames ar "t")
+                args = map ((++) (typeId ++ " ")) (convenienceNames ar "t")
             in
-                fixpointNoBody "Term" (reservedVeriFastWords (BC.unpack f)) args
+                fixpointNoBody typeId (reservedVeriFastWords (BC.unpack f)) args
         ppFunSym (AC o) = 
             -- AC function symbols are made to be binary
             -- This needs to happen in function declaration and application
-            fixpointNoBody "Term" (reservedVeriFastWords (show o)) ["Term x", "Term y"]
+            fixpointNoBody typeId (reservedVeriFastWords (show o)) [typeId ++ " x", typeId ++ " y"]
         ppFunSym (C EMap) = -- TODO not sure if we should print emapSymString or EMap
-            fixpointNoBody "Term" (reservedVeriFastWords (BC.unpack emapSymString)) ["Term x", "Term y"]
+            fixpointNoBody typeId (reservedVeriFastWords (BC.unpack emapSymString)) [typeId ++ " x", typeId ++ " y"]
         ppFunSym (List) = -- TODO not sure about this one, but does not seem to be used anyway
-            error $ functionApp "list" ["l seq[Term]"] -- NYI
-funcACLemmas :: Document d => [FunSym] -> d
-funcACLemmas fSyms =
+            error $ functionApp "list" ["l seq["++ typeId ++"]"] -- NYI
+funcACLemmas :: Document d => (FunSym -> d) -> [FunSym] -> d
+funcACLemmas ppACLemma fSyms =
     let
         filterAC = (\fs -> case fs of
             AC _ -> True
             _ -> False)
     in 
-        vcat $ map ppACLemmas (filter filterAC fSyms)
-    where
-        ppACLemmas :: Document d => FunSym -> d
-        ppACLemmas (AC o) =
-            let
-                name = (reservedVeriFastWords (show o))
-                lemmaNameA = (reservedVeriFastWords (show o) ++ "_A")
-                lemmaNameC = (reservedVeriFastWords (show o) ++ "_C")
-            in
-            text ("// associativity and commutativity for function " ++ name) $$
-            -- assoc
-            (autoLemmaNoBody "void" lemmaNameA ["Term x", "Term y", "Term z"] "true" $
-                "true && " ++
-                (functionApp name ["x", functionApp name ["y", "z"] ]) ++ " == " ++
-                (functionApp name [functionApp name ["x", "y"], "z" ])
-            ) $$
-            -- comm 
-            (autoLemmaNoBody "void" lemmaNameC ["Term x", "Term y"] "true" $
-                "true && " ++
-                (functionApp name ["x", "y"]) ++ " == " ++
-                (functionApp name ["y", "x"])
-            )
+        vcat $ map ppACLemma (filter filterAC fSyms)
+
+ppACLemmas :: Document d => FunSym -> d
+ppACLemmas (AC o) = nameACLemmas "Term" (reservedVeriFastWords (show o))
+
+nameACLemmas :: Document d => String -> String -> d
+nameACLemmas typeId name =
+    let
+        lemmaNameA = (name ++ "_A")
+        lemmaNameC = (name ++ "_C")
+    in
+    text ("// associativity and commutativity for function " ++ name) $$
+    -- assoc
+    (autoLemmaNoBody "void" lemmaNameA [typeId ++ " x", typeId ++ " y", typeId ++ " z"] "true" $
+        "true && " ++
+        (functionApp name ["x", functionApp name ["y", "z"] ]) ++ " == " ++
+        (functionApp name [functionApp name ["x", "y"], "z" ])
+    ) $$
+    -- comm 
+    (autoLemmaNoBody "void" lemmaNameC [typeId ++ " x", typeId ++ " y"] "true" $
+        "true && " ++
+        (functionApp name ["x", "y"]) ++ " == " ++
+        (functionApp name ["y", "x"])
+    )
+
+
             
 
 {- ---- equation encoding -}
@@ -117,14 +127,14 @@ eqEncoding sigMaude =
     let 
         rrules = S.toList (rrulesForMaudeSig sigMaude)
     in
-        vcat $ map (uncurry ppRRule) (zip (convenienceNames (length rrules) "termFuncLemma") rrules)
+        vcat $ map (uncurry (ppRRule "Term")) (zip (convenienceNames (length rrules) "termFuncLemma") rrules)
 
 {- ---- ---- pretty print rewriting rules -}
-ppRRule :: Document d => String -> T.RRule T.LNTerm -> d
-ppRRule lemmaName rr@(T.RRule lhs rhs) = 
+ppRRule :: Document d => String -> String -> T.RRule T.LNTerm -> d
+ppRRule typeId lemmaName rr@(T.RRule lhs rhs) = 
     let
         vars = frees rr
-        args = map ((++) "Term " . prettyVFLNTerm True . TID.varToVTerm) vars
+        args = map ((++) (typeId ++ " ") . prettyVFLNTerm True . TID.varToVTerm) vars
         ens = (prettyVFLNTerm True lhs ++ " == " ++ prettyVFLNTerm True rhs)
     in
         autoLemmaNoBody "void" lemmaName args "true" ("true && " ++ ens)
