@@ -1,12 +1,12 @@
 # Verified Wireguard Implementation
-[![WireGuard Code Verification](https://github.com/soundverification/wireguard/actions/workflows/wireguard-code.yml/badge.svg?branch=main)](https://github.com/soundverification/wireguard/actions/workflows/wireguard-code.yml?query=branch%3Amain)
+[![WireGuard Code Verification](https://github.com/viperproject/protocol-verification-refinement/actions/workflows/wireguard-code.yml/badge.svg?branch=main)](https://github.com/viperproject/protocol-verification-refinement/actions/workflows/wireguard-code.yml?query=branch%3Amain)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](../../LICENSE)
 
 ## Verifying & Running Initiator & Responder in Docker
 The sources of this verified implementation together with the code verifier Gobra and its dependencies are provided as a Docker image.
 The image can be pulled and started in interactive mode as follows (assuming that Docker has been installed):
 ```
-docker run -it ghcr.io/soundverification/wireguard-gobra:latest bash
+docker run -it ghcr.io/viperproject/protocol-verification-refinement-wireguard:latest bash
 ```
 An interactive shell at the working directory `/gobra` is started.
 In this directory, you find the source code of our WireGuard case study.

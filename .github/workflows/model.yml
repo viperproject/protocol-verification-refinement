@@ -11,7 +11,7 @@ jobs:
       - name: Create Image ID
         run: |
           REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE_ID=ghcr.io/$REPO_OWNER/tamarin" >> $GITHUB_ENV
+          echo "IMAGE_ID=ghcr.io/$REPO_OWNER/protocol-verification-refinement-tamarin" >> $GITHUB_ENV
 
       - name: Checkout repo
         uses: actions/checkout@v2

@@ -1,5 +1,5 @@
 # Go Diffie-Hellman Implementation
-[![DH Code Verification](https://github.com/soundverification/wireguard/actions/workflows/dh-code.yml/badge.svg?branch=main)](https://github.com/soundverification/wireguard/actions/workflows/dh-code.yml?query=branch%3Amain)
+[![DH Code Verification](https://github.com/viperproject/protocol-verification-refinement/actions/workflows/dh-code.yml/badge.svg?branch=main)](https://github.com/viperproject/protocol-verification-refinement/actions/workflows/dh-code.yml?query=branch%3Amain)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](../../LICENSE)
 
 ## Building & Running the Initiator Role

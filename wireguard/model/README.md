@@ -1,5 +1,5 @@
 # Tamarin model for WireGuard key exchange
-[![DH & WireGuard Protocol Model Verification](https://github.com/soundverification/wireguard/actions/workflows/model.yml/badge.svg?branch=main)](https://github.com/soundverification/wireguard/actions/workflows/model.yml?query=branch%3Amain)
+[![DH & WireGuard Protocol Model Verification](https://github.com/viperproject/protocol-verification-refinement/actions/workflows/model.yml/badge.svg?branch=main)](https://github.com/viperproject/protocol-verification-refinement/actions/workflows/model.yml?query=branch%3Amain)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](../../LICENSE)
 
 
@@ -31,5 +31,5 @@ To verify the model with Tamarin, use the following command:
 The model together with Tamarin and its dependencies are provided as a Docker image.
 The image can be pulled and the Tamarin model can be verified as follows (assuming that Docker has been installed):
 ```
-docker run -it ghcr.io/soundverification/tamarin:latest tamarin-prover --heuristic=O --oraclename="wireguard.oracle" --prove wireguard.spthy
+docker run -it ghcr.io/viperproject/protocol-verification-refinement-tamarin:latest tamarin-prover --heuristic=O --oraclename="wireguard.oracle" --prove wireguard.spthy
 ```
