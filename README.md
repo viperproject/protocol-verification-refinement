@@ -20,21 +20,21 @@ This artifact has been archived on Zenodo (DOI: [10.5281/zenodo.7409524](https:/
 
 ```bibtex
 @misc{ArquintWLSSWBM22Artifact,
-	author = {Linard Arquint and
-              Felix A. Wolf and
-              Joseph Lallemand and
-              Ralf Sasse and
-              Christoph Sprenger and
-              Sven N. Wiesner and
-              David Basin and
-              Peter M{\"{u}}ller},
-	publisher = {Zenodo},
-	title = {Sound Verification of Security Protocols: From Design to Interoperable Implementations},
-	month = aug,
-	year = 2022,
-	publisher = {Zenodo},
-	version = {v1.0.0},
-	doi = {10.5281/zenodo.7409524},
-	url = {https://doi.org/10.5281/zenodo.7409524},
-	note = {Artifact containing the specification generation tool and the Diffie-Hellman (DH) and WireGuard case studies.}}
+  author = {Linard Arquint and
+            Felix A. Wolf and
+            Joseph Lallemand and
+            Ralf Sasse and
+            Christoph Sprenger and
+            Sven N. Wiesner and
+            David Basin and
+            Peter M{\"{u}}ller},
+  publisher = {Zenodo},
+  title = {Sound Verification of Security Protocols: From Design to Interoperable Implementations},
+  month = aug,
+  year = 2022,
+  publisher = {Zenodo},
+  version = {v1.0.0},
+  doi = {10.5281/zenodo.7409524},
+  url = {https://doi.org/10.5281/zenodo.7409524},
+  note = {Artifact containing the specification generation tool and the Diffie-Hellman (DH) and WireGuard case studies.}}
 ```
