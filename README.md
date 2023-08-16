@@ -7,7 +7,8 @@
 
 ## I/O Specification Generator & Diffie-Hellman (DH) and WireGuard Case Studies
 
-This repository contains the artifact for the paper "Sound Verication of Security Protocols: From Design to Interoperable Implementations", which will appear at the IEEE Symposium on Security and Privacy (S&P), 2023. <!--[[publisher]]()-->
+This repository contains the artifact for the paper "Sound Verication of Security Protocols: From Design to Interoperable Implementations", which appeared at the IEEE Symposium on Security and Privacy (S&P), 2023.
+[[published version]](https://doi.org/10.1109/SP46215.2023.10179325)
 [[extended version]](https://pm.inf.ethz.ch/publications/ArquintWolfLallemandSasseSprengerWiesnerBasinMueller22.pdf)
 
 This artifact provides the following content:
