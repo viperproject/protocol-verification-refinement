@@ -17,25 +17,24 @@ This artifact provides the following content:
 - The subdirectory `dh` contains the verified DH protocol model together with a verified Go and Java implementations. Additionally, `dh/faulty-go-implementation` contains a Go implementation that tries to send the DH private key in plaintext for which verification fails because the IO specification does not permit such a send operation.
 - The subdirectory `specification-generator` contains the sources of our tool to generate I/O specifications for Gobra & VeriFast from a Tamarin model.
 
-This artifact has been archived on Zenodo (DOI: [10.5281/zenodo.7409524](https://doi.org/10.5281/zenodo.7409524)) and can be cited as follows (for BibTeX):
+This artifact has been archived on Zenodo (DOI: [10.5281/zenodo.7409524](https://doi.org/10.5281/zenodo.7409524)). The paper can be cited as follows (for BibTeX):
 
-```bibtex
-@misc{ArquintWLSSWBM22Artifact,
-  author = {Linard Arquint and
-            Felix A. Wolf and
-            Joseph Lallemand and
-            Ralf Sasse and
-            Christoph Sprenger and
-            Sven N. Wiesner and
-            David Basin and
-            Peter M{\"{u}}ller},
-  publisher = {Zenodo},
+```BibTex
+@inproceedings{ArquintWLSSWBM23,
+  author = {Arquint, Linard and Wolf, Felix A. and Lallemand, Joseph and Sasse, Ralf and Sprenger, Christoph and Wiesner, Sven N. and Basin, David and M\"uller, Peter},
+  booktitle = {2023 IEEE Symposium on Security and Privacy (SP)},
   title = {Sound Verification of Security Protocols: From Design to Interoperable Implementations},
-  month = aug,
-  year = 2022,
-  publisher = {Zenodo},
-  version = {v1.0.0},
-  doi = {10.5281/zenodo.7409524},
-  url = {https://doi.org/10.5281/zenodo.7409524},
-  note = {Artifact containing the specification generation tool and the Diffie-Hellman (DH) and WireGuard case studies.}}
+  year = {2023},
+  volume = {},
+  number = {},
+  pages = {1077-1093},
+  keywords = {protocol-verification;symbolic-security;automated-verification;tamarin;separation-logic;implementation},
+  publisher = {IEEE},
+  month = may,
+  doi = {10.1109/SP46215.2023.10179325},
+  url = {https://doi.org/10.1109/SP46215.2023.10179325},
+  urltext = {Publisher},
+  url1 = {https://pm.inf.ethz.ch/publications/ArquintWolfLallemandSasseSprengerWiesnerBasinMueller23.pdf},
+  url1text = {PDF}
+}
 ```
