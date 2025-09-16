@@ -337,7 +337,7 @@ importHeader config importedPackages =
 
 domain :: Document d => String -> d -> d
 domain name doc = 
-    braces' (text ("type " ++ name ++ " domain")) doc
+    braces' (text ("ghost type " ++ name ++ " domain")) doc
 
 
 forallWithTriggerSetting :: Document d => TriggerSetting -> d -> [d] -> d -> d

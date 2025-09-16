@@ -160,6 +160,7 @@ getPermDef p@(TID.IOSFpred (TID.Perm _ _name) _) =
         functionDefPerm perm@(TID.IOSFpred (TID.Perm _ _) _) n termsWithType retTermWithType =
             text "ghost" $$
             text "requires " <> permApp perm $$
+            text "decreases" $$
             text "pure " <> functionDefDoc (text n) termsWithType (text retTermWithType)
         functionDefPerm _ _ _ _ = error "functionDefPerm called with wrong arguments."
 getPermDef _ = error "getPermDef called with wrong arguments."
@@ -278,6 +279,7 @@ internBIO p@(TID.IOSFpred (TID.Perm TID.Internal_R name) ts) =
         text "requires token(" <> placeSrc <> text ") && " <> permApp p $$
         text "ensures token(" <> placeDst <> text ") && " <> placeDst <> text " == old(" <>
         (getPermApp p !! 0) <> text ")" $$ 
+        text "decreases" $$
         functionDefDoc (text $ "internBIO_" ++ name) argsWithType (parens retTermWithType)
 internBIO _ = error "internBIO not called with the right argument."
 

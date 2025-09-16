@@ -214,6 +214,7 @@ mFunc :: Document d => d
 mFunc = 
     text "ghost" $$
     text "ensures res == (linearFacts(l) subset s && persistentFacts(l) subset s)" $$
+    text "decreases" $$
     text "pure func M(l mset[Fact], s mset[Fact]) (res bool) {" $$
     nest 4 (
         text "// non-persistent facts" $$
@@ -231,6 +232,7 @@ uFunc :: Document d => d
 uFunc = 
     text "ghost" $$
     text "ensures result == s setminus linearFacts(l) union r" $$
+    text "decreases" $$
     text "pure func U(l mset[Fact], r mset[Fact], s mset[Fact]) (result mset[Fact])"
 
 {- ---- -}
@@ -240,6 +242,7 @@ filterIsPersFunc =
     text "ghost" $$
     text "// returns a multiset containing just the persistent facts of l all with multiplicity 1" $$
     text "ensures forall f Fact :: { f # result } (f # result) == (persistent(f) && (f # l) > 0 ? 1 : 0)" $$
+    text "decreases" $$
     text "pure func persistentFacts(l mset[Fact]) (result mset[Fact])"
 
 {- ---- -}
@@ -249,6 +252,7 @@ filterIsLinFunc =
     text "ghost" $$
     text "// returns a multiset containing just the non-persistent facts of l while retaining their multiplicity" $$
     text "ensures forall f Fact :: { f # result } (f # result) == (persistent(f) ? 0 : (f # l))" $$
+    text "decreases" $$
     text "pure func linearFacts(l mset[Fact]) (result mset[Fact])"
 
 
