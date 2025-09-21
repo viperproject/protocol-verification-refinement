@@ -7,6 +7,9 @@ jobs:
   build-verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # set per-job GITHUB_TOKEN permissions such that pushing the Docker image will be possible:
+    permissions:
+      packages: write
     steps:
       - name: Create Image ID
         run: |
@@ -14,7 +17,7 @@ jobs:
           echo "IMAGE_ID=ghcr.io/$REPO_OWNER/protocol-verification-refinement-tamarin" >> $GITHUB_ENV
 
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Image version
         run: |
@@ -23,10 +26,10 @@ jobs:
           echo "IMAGE_TAG=${{ env.IMAGE_ID }}:$VERSION" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
       - name: Build image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           context: .
           load: true
@@ -44,14 +47,14 @@ jobs:
         run: docker run ${{ env.IMAGE_TAG }} ./verify-wireguard.sh
 
       - name: Login to Github Packages
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: tamarin-docker/Dockerfile
