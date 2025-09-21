@@ -1,9 +1,7 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 import re
-import os
 import sys
-debug = True
 
 lines = sys.stdin.readlines()
 lemma = sys.argv[1]
@@ -17,7 +15,7 @@ lemma = sys.argv[1]
 
 rank = []             # list of list of goals, main list is ordered by priority
 maxPrio = 110
-for i in range(0,maxPrio):
+for i in range(0, maxPrio):
   rank.append([])
 
 # SOURCES LEMMAS
@@ -39,5 +37,4 @@ else:
 for listGoals in reversed(rank):
   for goal in listGoals:
     sys.stderr.write(goal)
-    print goal
-
+    print(goal)
