@@ -16,7 +16,7 @@ jobs:
         run: apt-get update && apt-get install -y git curl tar libgomp1
 
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Verify DH initiator in Go using Gobra
         run: |
