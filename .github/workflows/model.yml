@@ -7,6 +7,9 @@ jobs:
   build-verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # set per-job GITHUB_TOKEN permissions such that pushing the Docker image will be possible:
+    permissions:
+      packages: write
     steps:
       - name: Create Image ID
         run: |
