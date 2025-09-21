@@ -1,6 +1,11 @@
 module PrettyIOSpecs.Gobra.Utils (
 
-        reservedGobraWords
+        gobraFilePathRel
+    ,   gobraFilePathBase
+    ,   modNames
+    ,   reservedGobraWords
+
+    ,   prettyLit
     ,   prettyGobraLNTerm
     ,   prettyGobraLNTermWithType
     ,   prettyGobraIOSTerm
@@ -8,7 +13,9 @@ module PrettyIOSpecs.Gobra.Utils (
     ,   gobraHeader
     ,   domain
 
+    ,   exists
     ,   forallWithTriggerSetting
+    ,   forallWithTriggerSettingInline
 
     ,   axiom
     ,   prettyFact
@@ -34,6 +41,7 @@ module PrettyIOSpecs.Gobra.Utils (
 import              Prelude
 import qualified    Data.Map as Map
 import qualified    Data.ByteString.Char8 as BC
+import              System.FilePath
 
 -- Tamarin prover imports
 import              Text.PrettyPrint.Class
@@ -54,7 +62,23 @@ import qualified    IoSpecs as IOS
 import DerivingInstances()
 import PrettyIOSpecs.CommonFunctions
 
+gobraFilePathRel :: String -> String
+gobraFilePathRel name = name </> (name ++ ".gobra")
 
+gobraFilePathBase :: Map.Map String String -> String -> String
+gobraFilePathBase config name = config Map.! "base_dir" </> (gobraFilePathRel name)
+
+modNames :: [String]
+modNames =             
+    [ "place"
+    , "fresh"
+    , "pub"
+    , "term"
+    , "bytes"
+    , "claim"
+    , "fact"
+    , "iospec"
+    ]
 
 data TriggerSetting = None | Lhs | All
     deriving (Prelude.Read, Prelude.Show, Prelude.Eq)
@@ -291,10 +315,10 @@ showTamiFactTag ft = case ft of
 {- Formatting -}
 
 gobraHeader :: Document d => Map.Map String String -> String -> [String] -> d -> d
-gobraHeader config packageName importKeys spec = 
+gobraHeader config packageName importedPackages spec = 
     packageHeader packageName $$
     (text "\n") $$
-    importHeader config importKeys $$
+    importHeader config importedPackages $$
     (text "\n") $$
     spec
 
@@ -305,28 +329,30 @@ packageHeader package_name =
     )
 
 importHeader :: Document d => Map.Map String String -> [String] -> d
-importHeader config mod_keys =
-    vcat $ map (text . ("import . " ++)) $ map (quotes' . (config Map.!)) mod_keys 
+importHeader config importedPackages =
+    vcat $ map (text . ("import . " ++)) $ map (\i -> quotes' $ config Map.! "module" </> i) importedPackages 
     where
         quotes' :: String -> String
         quotes' s = "\""++s++"\""
 
 domain :: Document d => String -> d -> d
 domain name doc = 
-    braces' (text ("type " ++ name ++ " domain")) doc
+    braces' (text ("ghost type " ++ name ++ " domain")) doc
 
 
 forallWithTriggerSetting :: Document d => TriggerSetting -> d -> [d] -> d -> d
 forallWithTriggerSetting =
-    quantifiedWithTriggerSetting "forall"
+    quantifiedWithTriggerSetting False "forall"
 
-{-
+forallWithTriggerSettingInline :: Document d => TriggerSetting -> d -> [d] -> d -> d
+forallWithTriggerSettingInline =
+    quantifiedWithTriggerSetting True "forall"
+
 exists :: Document d => d -> d -> d
-exists termsWithType body = quantifiedWithTriggerSetting "exists" None termsWithType [] body
--}
+exists termsWithType body = quantifiedWithTriggerSetting False "exists" None termsWithType [] body
 
-quantifiedWithTriggerSetting :: Document d => String -> TriggerSetting -> d -> [d] -> d -> d
-quantifiedWithTriggerSetting quant triggerSetting termsWithType triggers body =
+quantifiedWithTriggerSetting :: Document d => Bool -> String -> TriggerSetting -> d -> [d] -> d -> d
+quantifiedWithTriggerSetting inline quant triggerSetting termsWithType triggers body =
     let
         triggs = 
             if (length triggers) == 0 || triggerSetting == None
@@ -337,7 +363,9 @@ quantifiedWithTriggerSetting quant triggerSetting termsWithType triggers body =
                 else triggers 
             )
     in
-        quantified quant termsWithType triggs body
+        if inline
+        then quantifiedInline quant termsWithType triggs body
+        else quantified quant termsWithType triggs body
 
 quantified :: Document d => String -> d -> [d] -> d -> d
 quantified quant termsWithType triggers body =
@@ -349,6 +377,16 @@ quantified quant termsWithType triggers body =
             bracedTriggers <> text " (" $$
             nest 4 body <> text ")"
         )
+
+quantifiedInline :: Document d => String -> d -> [d] -> d -> d
+quantifiedInline quant termsWithType triggers body =
+    let
+        bracedTriggers = (hcat $ punctuate (text " ") $ map bracesInline triggers)
+    in
+        text (quant ++ " ") <> termsWithType <> text " :: " <>
+        bracedTriggers <> text " (" <>
+        body <> text ")"
+
 
 axiom :: Document d => d -> d
 axiom body = braces' (text "axiom ") body

@@ -19,7 +19,7 @@ import              Term.Maude.Signature(MaudeSig, rrulesForMaudeSig, funSyms)
 import              Term.Term.FunctionSymbols
 import              Term.Builtin.Rules(RRule(..))
 import              Term.LTerm (frees)
-import              Term.VTerm(constsVTerm)
+-- import              Term.VTerm(constsVTerm)
 import              Term.Builtin.Convenience(x1, x2, x3)
 import              Theory.Model.Signature(_sigMaudeInfo)
 import qualified    Theory as T
@@ -41,7 +41,7 @@ gobraTermEncoding config (TID.Theory _thyName fsig _thyItems) =
         -- assume maudeSig has been used appropriately to initialize funSyms
         sigMaude = ( _sigMaudeInfo fsig)
     in
-        gobraHeader config "term" ["mod_pub", "mod_fresh"] (
+        gobraHeader config "term" ["pub", "fresh"] (
             domain "Term" (
                 baseTermEncoding $$
                 termFuncEncoding sigMaude $$
@@ -59,27 +59,30 @@ termFuncEncoding sigMaude =
         -- get function signatures from Maude signature
         funcSyms = S.toList (funSyms sigMaude)
     in
-        (vcat $ map ppFunSym funcSyms) $$ text "\n"
-    where
-        ppFunSym :: Document d => FunSym -> d
-        ppFunSym (NoEq (f, (ar, _))) = 
-            -- we do not make a distinction between private and public since we don't consider the adversary
-            let 
-                args = map (++ " Term") (convenienceNames ar "t")
-            in
-                text $ functionDef (reservedGobraWords (BC.unpack f)) args "Term"
-        ppFunSym (AC o) = 
-            -- AC function symbols are made to be binary
-            -- This needs to happen in function declaration and application
-            (text $ functionDef (reservedGobraWords (show o)) ["x Term", "y Term"] "Term") $$
-            text "// associativity" $$
-            assocEncoding (AC o) $$
-            text "// commutativity" $$
-            commEncoding (AC o)
-        ppFunSym (C EMap) = -- TODO not sure if we should print emapSymString or EMap
-            text $ functionDef (reservedGobraWords (BC.unpack emapSymString)) ["x Term", "y Term"] "Term" 
-        ppFunSym (List) = -- TODO not sure about this one, but does not seem to be used anyway
-            text $ functionDef "list" ["l seq[Term]"] "Term"
+        (vcat $ map (ppFunSym "Term") funcSyms) $$ text "\n"
+
+ppFunSym :: Document d => String -> FunSym -> d
+ppFunSym typeId (NoEq (f, (ar, _))) = 
+    -- we do not make a distinction between private and public since we don't consider the adversary
+    let 
+        args = map (++ " " ++ typeId) (convenienceNames ar "t")
+    in
+        text $ functionDef (reservedGobraWords (BC.unpack f)) args typeId
+ppFunSym typeId (AC o) = 
+    -- AC function symbols are made to be binary
+    -- This needs to happen in function declaration and application
+    (text $ functionDef (reservedGobraWords (show o)) ["x " ++ typeId, "y " ++ typeId] typeId) $$
+    -- text ("// " ++ (reservedGobraWords (show o)) ++ " is associative") $$
+    text "// associativity" $$
+    assocEncoding (AC o) $$
+    -- text ("// " ++ (reservedGobraWords (show o)) ++ " is commutative") $$
+    text "// commutativity" $$
+    commEncoding (AC o)
+ppFunSym typeId (C EMap) = -- TODO not sure if we should print emapSymString or EMap
+    text $ functionDef (reservedGobraWords (BC.unpack emapSymString)) ["x " ++ typeId, "y " ++ typeId] typeId 
+ppFunSym typeId (List) = -- TODO not sure about this one, but does not seem to be used anyway
+    text $ functionDef "list" ["l seq[" ++ typeId ++ "]"] typeId
+
 
 
 {-  AC function symbols need an additional axiom to express it.
@@ -88,7 +91,7 @@ termFuncEncoding sigMaude =
     rrules based on the Tamarin equational theory (see equation encoding). -}
 {- ---- ---- associativity encoding -}
 assocEncoding :: Document d => FunSym -> d
-assocEncoding acSym@(AC _) = ppRRule Lhs (rruleAssoc acSym)
+assocEncoding acSym@(AC _) = ppRRule Lhs "Term" (rruleAssoc acSym)
     where 
         rruleAssoc :: FunSym -> RRule T.LNTerm
         rruleAssoc acOp =        auxFapp acOp [x1, auxFapp acOp [x2, x3]]
@@ -99,7 +102,7 @@ assocEncoding _ = error "assocEncoding called with non-ac function symbol"
 
 {- ---- ---- commutativity encoding -}
 commEncoding :: Document d => FunSym -> d
-commEncoding acSym@(AC _) = ppRRule Lhs (rruleComm acSym)
+commEncoding acSym@(AC _) = ppRRule Lhs "Term" (rruleComm acSym)
     where 
         rruleComm :: FunSym -> RRule T.LNTerm
         rruleComm acOp =         termViewToTerm (FApp acOp [x1, x2]) 
@@ -115,18 +118,17 @@ eqEncoding :: Document d => TriggerSetting -> MaudeSig -> d
 eqEncoding triggerSetting sigMaude = 
     let 
         rrules = S.toList (rrulesForMaudeSig sigMaude)
-        settings = repeat triggerSetting
     in
-        vcat $ punctuate (text "\n") $ map (uncurry ppRRule) (zip settings rrules)
+        vcat $ punctuate (text "\n") $ map (ppRRule triggerSetting "Term") rrules
 
 {- ---- ---- pretty print rewriting rules -}
-ppRRule :: Document d => TriggerSetting -> T.RRule T.LNTerm -> d
-ppRRule triggerSetting rr@(T.RRule lhs rhs) = 
+ppRRule :: Document d => TriggerSetting -> String -> T.RRule T.LNTerm -> d
+ppRRule triggerSetting typeId rr@(T.RRule lhs rhs) = 
     let 
         trigger = (auxTrigger lhs) ++ (auxTrigger rhs)
         body = text (prettyGobraLNTerm True lhs) <> text " == " <> text (prettyGobraLNTerm True rhs)
         vars = frees rr
-        doc_vars = sepTerms (map (text . prettyGobraLNTerm True . TID.varToVTerm) vars) <> text " Term"
+        doc_vars = sepTerms (map (text . prettyGobraLNTerm True . TID.varToVTerm) vars) <> text (" " ++ typeId)
     in
         if null vars
         then axiom body

@@ -4,7 +4,7 @@ module DerivingInstances(
     IOSpecWithDefs
 ) where
 import qualified TamiglooDatatypes as TID
-import qualified Theory as T
+-- import qualified Theory as T
 
 
 deriving instance Eq TID.SetOpId

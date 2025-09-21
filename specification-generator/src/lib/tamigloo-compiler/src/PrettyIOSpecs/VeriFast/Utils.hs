@@ -24,7 +24,7 @@ module PrettyIOSpecs.VeriFast.Utils (
 
 --
 import              Prelude
-import qualified    Data.Map as Map
+-- import qualified    Data.Map as Map
 import qualified    Data.ByteString.Char8 as BC
 
 -- Tamarin prover imports
@@ -36,11 +36,13 @@ import qualified    Theory as T
 
 -- Tamigloo imports
 -- ---- isabelle generated
-import              GenericHelperFunctions(nub)
+-- import              GenericHelperFunctions(nub)
 import qualified    TamiglooDatatypes as TID
+{- in case a debug output is created
 import qualified    ProtocolFormat as PF
 import qualified    InterfaceModel as IM
 import qualified    Decomposition as D
+-}
 import qualified    IoSpecs as IOS
 -- ---- other Tamigloo modules
 import DerivingInstances()
@@ -52,6 +54,8 @@ reservedVeriFastWords s =
     case s of
         _ | s == "true" -> "ok"
         _ | s == "pair" -> "paired"
+        _ | s == "fst" -> "fstTerm"
+        _ | s == "snd" -> "sndTerm"
         _ -> id s 
 
 printTypeOfLNTerm :: T.LNTerm -> String

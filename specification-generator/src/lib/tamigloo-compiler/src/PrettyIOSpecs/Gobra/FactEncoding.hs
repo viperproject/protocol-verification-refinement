@@ -14,7 +14,7 @@ import              Text.PrettyPrint.Class
 
 -- Tamigloo imports
 -- ---- isabelle generated
-import              GenericHelperFunctions(nubBy)
+import              GenericHelperFunctions(nubBy, flipEnumIntZero)
 import qualified    TamiglooDatatypes as TID
 import qualified    IoSpecs as IOS
 -- ---- other Tamigloo modules
@@ -24,7 +24,7 @@ import              PrettyIOSpecs.Gobra.Utils
 
 gobraFactEncoding :: Document d => Map.Map String String -> TID.Theory -> d
 gobraFactEncoding config tamiThy =
-    gobraHeader config "fact" ["mod_term", "mod_pub", "mod_fresh"] (
+    gobraHeader config "fact" ["term", "pub", "fresh"] (
         domain "Fact" (
             factEncoding (collectFactsIOSFormulas . getDefsFromIOSpecs $ tamiThy) <>
             (text "\n") 
@@ -35,9 +35,9 @@ gobraFactEncoding config tamiThy =
         factEncoding :: Document d => [TID.Fact] -> d
         factEncoding fs =
             (vcat $ punctuate (text "\n") $
-                map (uncurry singleFactEncoding) (enum fs)) <>
+                map (uncurry singleFactEncoding) (flipEnumIntZero  fs)) <>
             text "\n" $$
-            persistentFunc (enum fs)
+            persistentFunc (flipEnumIntZero  fs)
         collectFactsIOSFormulas :: [TID.IOSFormula] -> [TID.Fact]
         collectFactsIOSFormulas fs = nubBy TID.eqFactSig $ concat $ map (TID.getFactsFromFormula TID.getFactsFromIOSTerm) fs
         getDefsFromIOSpecs :: TID.Theory -> [TID.IOSFormula]
@@ -47,7 +47,7 @@ gobraFactEncoding config tamiThy =
 
 gobraClaimEncoding :: Document d => Map.Map String String -> TID.Theory -> d
 gobraClaimEncoding config tamiThy =
-    gobraHeader config "claim" ["mod_term"] (
+    gobraHeader config "claim" ["term"] (
         domain "Claim" (
             claimEncoding (collectClaimsIOSFormulas . getDefsFromIOSpecs $ tamiThy) <>
             (text "\n")
@@ -214,6 +214,7 @@ mFunc :: Document d => d
 mFunc = 
     text "ghost" $$
     text "ensures res == (linearFacts(l) subset s && persistentFacts(l) subset s)" $$
+    text "decreases" $$
     text "pure func M(l mset[Fact], s mset[Fact]) (res bool) {" $$
     nest 4 (
         text "// non-persistent facts" $$
@@ -231,6 +232,7 @@ uFunc :: Document d => d
 uFunc = 
     text "ghost" $$
     text "ensures result == s setminus linearFacts(l) union r" $$
+    text "decreases" $$
     text "pure func U(l mset[Fact], r mset[Fact], s mset[Fact]) (result mset[Fact])"
 
 {- ---- -}
@@ -240,6 +242,7 @@ filterIsPersFunc =
     text "ghost" $$
     text "// returns a multiset containing just the persistent facts of l all with multiplicity 1" $$
     text "ensures forall f Fact :: { f # result } (f # result) == (persistent(f) && (f # l) > 0 ? 1 : 0)" $$
+    text "decreases" $$
     text "pure func persistentFacts(l mset[Fact]) (result mset[Fact])"
 
 {- ---- -}
@@ -249,6 +252,7 @@ filterIsLinFunc =
     text "ghost" $$
     text "// returns a multiset containing just the non-persistent facts of l while retaining their multiplicity" $$
     text "ensures forall f Fact :: { f # result } (f # result) == (persistent(f) ? 0 : (f # l))" $$
+    text "decreases" $$
     text "pure func linearFacts(l mset[Fact]) (result mset[Fact])"
 
 

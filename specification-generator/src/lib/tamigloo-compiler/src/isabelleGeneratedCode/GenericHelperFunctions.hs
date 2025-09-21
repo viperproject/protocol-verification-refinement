@@ -1,9 +1,10 @@
 {-# LANGUAGE EmptyDataDecls, RankNTypes, ScopedTypeVariables #-}
 
 module
-  GenericHelperFunctions(anya, nubBy, nub, enum, isSome, fstList, sndList,
-                          zipWith, flipPair, collectThe, stringOfNat,
-                          splitAndGetFst, splitAndGetSnd, prependToString,
+  GenericHelperFunctions(anya, nubBy, nub, enum, scanl, isSome, fstList,
+                          sndList, uncurry, zipWith, flipPair, collectThe,
+                          enumIntZero, flipEnumInt, stringOfNat, splitAndGetFst,
+                          splitAndGetSnd, flipEnumIntZero, prependToString,
                           sortIntoBucketsOrdered, sortIntoBuckets,
                           stringOfInteger)
   where {
@@ -36,6 +37,12 @@ enum :: forall a. Arith.Nat -> [a] -> [(Arith.Nat, a)];
 enum uu [] = [];
 enum i (x : xs) = (i, x) : enum (Arith.plus_nat i Arith.one_nat) xs;
 
+scanl :: forall a b. (a -> b -> a) -> a -> [b] -> [a];
+scanl f s ls = s : (case ls of {
+                     [] -> [];
+                     x : a -> scanl f (f s x) a;
+                   });
+
 unzip :: forall a b. [(a, b)] -> ([a], [b]);
 unzip inp = let {
               splitPair = (\ p ps -> (fst p : fst ps, snd p : snd ps));
@@ -45,11 +52,17 @@ isSome :: forall a. Maybe a -> Bool;
 isSome (Just uu) = True;
 isSome Nothing = False;
 
+enumInt :: forall a. Arith.Nat -> [a] -> [(Integer, a)];
+enumInt i xs = map (\ p -> (Arith.integer_of_nat (fst p), snd p)) (enum i xs);
+
 fstList :: forall a b. [(a, b)] -> [a];
 fstList pairList = fst (unzip pairList);
 
 sndList :: forall a b. [(a, b)] -> [b];
 sndList pairList = snd (unzip pairList);
+
+uncurry :: forall a b c. (a -> b -> c) -> (a, b) -> c;
+uncurry f p = f (fst p) (snd p);
 
 zipWith :: forall a b c. (a -> b -> c) -> [a] -> [b] -> [c];
 zipWith uu [] uv = [];
@@ -77,6 +90,12 @@ collectThe :: forall a. [Maybe a] -> [a];
 collectThe asa =
   List.map_filter (\ x -> (if isSome x then Just (Option.the x) else Nothing))
     asa;
+
+enumIntZero :: forall a. [a] -> [(Integer, a)];
+enumIntZero ls = enumInt Arith.zero_nat ls;
+
+flipEnumInt :: forall a. Arith.Nat -> [a] -> [(a, Integer)];
+flipEnumInt i ls = map flipPair (enumInt i ls);
 
 revDigitsOfNumber :: Arith.Nat -> [Arith.Nat];
 revDigitsOfNumber i =
@@ -120,6 +139,9 @@ splitAndGetSnd s =
     ((snd . auxSplit [])
       (map (let ord k | (k < 128) = Prelude.toInteger k in ord . (Prelude.fromEnum :: Prelude.Char -> Prelude.Int))
         s));
+
+flipEnumIntZero :: forall a. [a] -> [(a, Integer)];
+flipEnumIntZero ls = flipEnumInt Arith.zero_nat ls;
 
 prependToString :: String -> String -> String;
 prependToString first second =

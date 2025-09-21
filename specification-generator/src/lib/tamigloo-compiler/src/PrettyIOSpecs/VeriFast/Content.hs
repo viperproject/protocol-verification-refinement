@@ -10,22 +10,23 @@ import              Prelude
 import qualified    Data.Map as Map
 import              Text.PrettyPrint.Class
 import              System.FilePath
-import              Text.RawString.QQ
+-- import              Text.RawString.QQ
 
-import qualified    Theory as T
-import qualified    Theory.Model.Formula as Form
+-- import qualified    Theory as T
+-- import qualified    Theory.Model.Formula as Form
 
-import              TamiglooConfig
+-- import              TamiglooConfig
 import qualified    TamiglooDatatypes as TID
-import qualified    IoSpecs as IOS
+-- import qualified    IoSpecs as IOS
 import              GenericHelperFunctions(nub)
 -- import              Arith (integer_of_nat)
 
-import PrettyIOSpecs.VeriFast.Utils
+-- import PrettyIOSpecs.VeriFast.Utils
 import PrettyIOSpecs.VeriFast.TermEncoding
 import PrettyIOSpecs.VeriFast.FactEncoding
 import PrettyIOSpecs.VeriFast.PermissionEncoding
 import PrettyIOSpecs.VeriFast.IOSpecs
+import PrettyIOSpecs.VeriFast.BytesEncoding
 
 content:: Document d => Map.Map String String -> TID.Theory -> [(FilePath, d)]
 content = generatePathsWithContent
@@ -44,6 +45,7 @@ generatePathsWithContent config tamiThy =
             , dirPath config "fact" "fact" ["fresh", "pub", "term"] (veriFastFactEncoding tamiThy) -- maybe add multiset encoding here
             , dirPath config "claim" "claim" ["fresh", "pub", "term"] (veriFastClaimEncoding tamiThy)
             , dirPath config "place" "place" [] (veriFastPlaceEncoding)
+            , dirPath config "bytes" "bytes" ["pub", "term"] (veriFastBytesEncoding tamiThy)
             ]
         permissions = concat $
             [ dirPath config "iospec" "permissions_out" ["place", "fresh", "pub", "term"] (veriFastOutPermissions tamiThy)
@@ -90,10 +92,11 @@ dirPath config packageName fileName dependencies body =
     , (javaspecPath, javaspecContent)
     ]
 
+{-
 dropPrefix :: Eq a => [a] -> [a] -> [a]
 dropPrefix [] l = l
 dropPrefix _ [] = error "Prefix is longer than list."
 dropPrefix (p:ps) (x:xs) = if p == x then dropPrefix ps xs else error "Not a prefix."
-    
+-}  
 
 

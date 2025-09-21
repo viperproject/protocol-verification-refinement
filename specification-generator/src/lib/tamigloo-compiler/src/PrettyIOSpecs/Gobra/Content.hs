@@ -11,12 +11,12 @@ import qualified    Data.Map as Map
 import              Text.PrettyPrint.Class
 import System.FilePath
 
-import qualified    Theory as T
-import qualified    Theory.Model.Formula as Form
+-- import qualified    Theory as T
+-- import qualified    Theory.Model.Formula as Form
 
-import              TamiglooConfig
+-- import              TamiglooConfig
 import qualified    TamiglooDatatypes as TID
-import qualified    IoSpecs as IOS
+-- import qualified    IoSpecs as IOS
 -- import              Arith (integer_of_nat)
 
 import PrettyIOSpecs.Gobra.Utils
@@ -24,6 +24,7 @@ import PrettyIOSpecs.Gobra.TermEncoding
 import PrettyIOSpecs.Gobra.FactEncoding
 import PrettyIOSpecs.Gobra.PermissionEncoding
 import PrettyIOSpecs.Gobra.IOSpecs
+import PrettyIOSpecs.Gobra.BytesEncoding
 
 
 
@@ -45,24 +46,24 @@ generatePathsWithContent config tamiThy =
     where
         encodings :: Document d => [(String, d)]
         encodings =
-            map (\p -> (config Map.! (fst p), snd p)) $
-            [ ("path_claim", gobraClaimEncoding config tamiThy)
-            , ("path_fact", gobraFactEncoding config tamiThy)
-            , ("path_term", gobraTermEncoding config tamiThy)
-            , ("path_place", gobraPlaceEncoding config)
-            , ("path_pub", gobraPubEncoding config tamiThy)
-            , ("path_fresh", gobraFreshEncoding config)
+            [ (gobraFilePathBase config "place", gobraPlaceEncoding config)
+            , (gobraFilePathBase config "fresh", gobraFreshEncoding config)
+            , (gobraFilePathBase config "pub", gobraPubEncoding config tamiThy)
+            , (gobraFilePathBase config "term", gobraTermEncoding config tamiThy)
+            , (gobraFilePathBase config "bytes", gobraBytesEncoding config tamiThy)
+            , (gobraFilePathBase config "claim", gobraClaimEncoding config tamiThy)
+            , (gobraFilePathBase config "fact", gobraFactEncoding config tamiThy)
             ]
         permissions :: Document d => [(String, d)]
         permissions =
             let
-                base = takeDirectory (config Map.! "path_iospec")
+                dir = config Map.! "base_dir" </> "iospec"
                 permsIntern = gobraInternalPermissions config tamiThy
-                pathsIntern = map (\p -> base </> "permissions_" ++ (fst p) ++ "_internal.gobra") permsIntern
+                pathsIntern = map (\p -> dir </> "permissions_" ++ (fst p) ++ "_internal.gobra") permsIntern
                 permsOut = gobraOutPermissions config tamiThy
-                pathOut = base </> "permissions_out.gobra"
+                pathOut = dir </> "permissions_out.gobra"
                 permsIn = gobraInPermissions config tamiThy
-                pathIn = base </> "permissions_in.gobra"
+                pathIn = dir </> "permissions_in.gobra"
             in
                 (pathOut, permsOut) : 
                 (pathIn, permsIn) : 
@@ -70,11 +71,11 @@ generatePathsWithContent config tamiThy =
         iospecs :: Document d => [(String, d)]
         iospecs =
             let
-                base = takeDirectory (config Map.! "path_iospec")
-                iospecs = gobraIOSpecs config tamiThy
-                paths = map (\p -> base </> (fst p) ++ ".gobra") iospecs
+                dir = config Map.! "base_dir" </> "iospec"
+                iospecsContent = gobraIOSpecs config tamiThy
+                paths = map (\p -> dir </> (fst p) ++ ".gobra") iospecsContent
             in
-                (zip paths (map snd iospecs))
+                (zip paths (map snd iospecsContent))
         debug :: Document d => [(String, d)]
         debug =
             [(config Map.! "base_dir" </> "tamiglooModel.debug", 
@@ -89,7 +90,8 @@ generatePathsWithContent config tamiThy =
 readMeFile :: Document d => Map.Map String String -> [(String, d)] -> [(String, d)] -> d
 readMeFile config perms ios =
     let
-        relPaths = Map.elems $ defaultRelativePaths
+        relPaths = map gobraFilePathRel modNames
+
     in
         text "Running the following commands from the base directory (directory where the readme resides) will verify the respective generated encoding using the provided Gobra jar." $$
         text "\n" $$

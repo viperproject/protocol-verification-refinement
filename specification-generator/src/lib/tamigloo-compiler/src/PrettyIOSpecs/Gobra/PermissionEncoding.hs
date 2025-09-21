@@ -27,7 +27,7 @@ import qualified    Data.ByteString.Char8 as BC
 -- Tamarin prover imports
 import              Text.PrettyPrint.Class
 import qualified    Theory as T
-import              Term.LTerm(sortOfLNTerm)
+-- import              Term.LTerm(sortOfLNTerm)
 -- Tamigloo imports
 -- ---- isabelle generated
 import              GenericHelperFunctions(nubBy)
@@ -49,7 +49,7 @@ gobraInternalPermissions config thy =
         header :: Document d => d -> d
         header body =
             gobraHeader config "iospec"
-                ["mod_claim", "mod_fact", "mod_term", "mod_place", "mod_pub", "mod_fresh"]
+                ["claim", "fact", "term", "place", "pub", "fresh"]
                 body
 
 {- internal permissions -}
@@ -73,7 +73,7 @@ gobraOutPermissions config thy =
             concatMap (\inp -> map snd $ IOS.getAbsPhisWithDef (snd inp)) (IOS.extractIOSpec thy)
     in
         gobraHeader config "iospec"
-            ["mod_claim", "mod_fact", "mod_term", "mod_place", "mod_pub", "mod_fresh"]
+            ["claim", "fact", "term", "place", "pub", "fresh"]
         (
             vcat $ permEncoding formulas TID.Out_RG
         )
@@ -85,7 +85,7 @@ gobraInPermissions config thy =
             concatMap (\inp -> map snd $ IOS.getAbsPhisWithDef (snd inp)) (IOS.extractIOSpec thy)
     in
         gobraHeader config "iospec"
-            ["mod_claim", "mod_fact", "mod_term", "mod_place", "mod_pub", "mod_fresh"]
+            ["claim", "fact", "term", "place", "pub", "fresh"]
         (
             vcat $ permEncoding formulas TID.In_RF
         )
@@ -116,20 +116,22 @@ singlePerm p@(TID.IOSFpred (TID.Perm permType name) _) =
             TID.Internal_R -> def <> text "\n" $$ (internBIO p)
             TID.In_RF -> def) <>
         text "\n\n"
+singlePerm _ = error "singlePerm called with wrong arguments."
 
 
 
 -- application of a permission
 permApp :: Document d => TID.IOSFormula -> d
-permApp p@(TID.IOSFpred (TID.Perm _ name) ts) =
+permApp p@(TID.IOSFpred (TID.Perm _ name) _) =
     let
         terms = (map (prettyGobraIOSTerm False)  $ permArgTerms p)
     in
         functionAppDoc (text name) terms
+permApp _ = error "permApp called with wrong arguments."
 
 -- definition of a permission (permission encoding)
 permDef :: Document d => TID.IOSFormula -> d
-permDef p@(TID.IOSFpred (TID.Perm _ name) ts) =
+permDef p@(TID.IOSFpred (TID.Perm _ name) _) =
     let
         argTerms = permArgTerms p
         types = map (text . printTypeOfIOSTerm) argTerms
@@ -138,10 +140,11 @@ permDef p@(TID.IOSFpred (TID.Perm _ name) ts) =
         termsWithType = zipWith (\a b -> text "ghost " <> a <> text " " <> b) termNames types
     in
         text "pred " <> functionAppDoc (text name) termsWithType
+permDef _ = error "permDef called with wrong arguments."
 
 -- definition of the getter functions of a permission
 getPermDef :: Document d => TID.IOSFormula -> [d]
-getPermDef p@(TID.IOSFpred (TID.Perm _ name) ts) =
+getPermDef p@(TID.IOSFpred (TID.Perm _ _name) _) =
     map
         (uncurry
             (\nr nrt -> 
@@ -154,43 +157,52 @@ getPermDef p@(TID.IOSFpred (TID.Perm _ name) ts) =
         (zip (nameRetTerms p) (nameRetTermsWithType p))
     where
         functionDefPerm :: Document d => TID.IOSFormula -> String -> [d] -> String -> d
-        functionDefPerm p@(TID.IOSFpred (TID.Perm _ _) _) name termsWithType retTermWithType =
+        functionDefPerm perm@(TID.IOSFpred (TID.Perm _ _) _) n termsWithType retTermWithType =
             text "ghost" $$
-            text "requires " <> permApp p $$
-            text "pure " <> functionDefDoc (text name) termsWithType (text retTermWithType)
+            text "requires " <> permApp perm $$
+            text "decreases" $$
+            text "pure " <> functionDefDoc (text n) termsWithType (text retTermWithType)
+        functionDefPerm _ _ _ _ = error "functionDefPerm called with wrong arguments."
+getPermDef _ = error "getPermDef called with wrong arguments."
 
 -- the names of the return values of a permission as named as r1, ..., rn, placeDst
 nameRetTerms :: TID.IOSFormula -> [String]
 nameRetTerms p@(TID.IOSFpred (TID.Perm _ _) _) =
     (convenienceNames (length (permReturnTerms p) - 1) "r") ++ ["placeDst"]
+nameRetTerms _ = error "nameRetTerms called with wrong arguments."
 
 -- names and types of the return values e.g. r1 Term, ..., rn Fresh, placeDst Place
 nameRetTermsWithType :: TID.IOSFormula -> [String]
-nameRetTermsWithType p@(TID.IOSFpred (TID.Perm _ _) ts) =
+nameRetTermsWithType p@(TID.IOSFpred (TID.Perm _ _) _) =
     zipWith (\a b -> a ++ " " ++ b) (nameRetTerms p) (map printTypeOfIOSTerm $ permReturnTerms p)
+nameRetTermsWithType _ = error "nameRetTermsWithType called with wrong arguments."
 
 -- give a name to a getter function of a permission
 permGetterName :: TID.IOSFormula -> String -> String
-permGetterName p@(TID.IOSFpred (TID.Perm _ name) _) suffix =
-    "get_" ++ name ++ "_" ++ suffix 
+permGetterName (TID.IOSFpred (TID.Perm _ name) _) suffix =
+    "get_" ++ name ++ "_" ++ suffix
+permGetterName _ _ = error "permGetterName called with wrong arguments."
 
 -- applications of the getters of a permission
 getPermApp :: Document d => TID.IOSFormula -> [d]
-getPermApp p@(TID.IOSFpred (TID.Perm _ _) ts) =
+getPermApp p@(TID.IOSFpred (TID.Perm _ _) _) =
     map
         (\nr -> functionAppDoc (text $ permGetterName p nr) (map (prettyGobraIOSTerm False) $ permArgTerms p))
         (nameRetTerms p)
+getPermApp _ = error "getPermApp called with wrong arguments."
 
 -- application of a permission
+{- getPermApp is used instead
 singleGetPermApp :: Document d => TID.IOSFormula -> Int -> d
-singleGetPermApp p@(TID.IOSFpred (TID.Perm _ _) ts) idx =
+singleGetPermApp p@(TID.IOSFpred (TID.Perm _ _) _) idx =
     let
         nr = (nameRetTerms p) !! idx 
     in
         functionAppDoc (text $ permGetterName p nr) (map (prettyGobraIOSTerm False) $ permArgTerms p)
-
+singleGetPermApp _ = error "singleGetPermApp called with wrong arguments."
+-}
 getPermToLNTerm :: TID.IOSFormula -> [T.LNTerm]
-getPermToLNTerm p@(TID.IOSFpred (TID.Perm _ _) ts) =
+getPermToLNTerm p@(TID.IOSFpred (TID.Perm _ _) _) =
     map
         (\suffix -> 
             T.FAPP 
@@ -198,18 +210,21 @@ getPermToLNTerm p@(TID.IOSFpred (TID.Perm _ _) ts) =
                 (map TID.getLNTermFromIOSTerm $ permArgTerms p)
         )
         (nameRetTerms p)
+getPermToLNTerm _ = error "getPermToLNTerm called with wrong arguments."
 
 getPermFunSym :: String -> TID.IOSFormula -> T.FunSym
-getPermFunSym name p@(TID.IOSFpred (TID.Perm _ _) ts) =
+getPermFunSym name p@(TID.IOSFpred (TID.Perm _ _) _) =
     T.NoEq ( BC.pack name, (length (permArgTerms p), T.Public))
+getPermFunSym _ _ = error "getPermFunSym called with wrong arguments."
 
 singleGetPermToLNTerm :: TID.IOSFormula -> Int -> T.LNTerm
 singleGetPermToLNTerm p idx = getPermToLNTerm p !! idx
 
 
 replacePermRetValues :: TID.IOSFormula -> TID.IOSFormula -> TID.IOSFormula
-replacePermRetValues p@(TID.IOSFpred (TID.Perm _ _) ts) f =
+replacePermRetValues p@(TID.IOSFpred (TID.Perm _ _) _) f =
     TID.mapTermsInFormula (\_ -> replacePermRetIOSTerm p) f
+replacePermRetValues _ _ = error "replacePermRetValues called with wrong arguments."
 
 replacePermRetIOSTerm :: TID.IOSFormula -> TID.IOSTerm -> TID.IOSTerm
 replacePermRetIOSTerm perm term =
@@ -225,7 +240,7 @@ replacePermRetIOSTerm perm term =
         mapFact f (TID.Fact fg ft lnTerms) = TID.Fact fg ft (map f lnTerms) 
 
 replacePermRetLNTerm :: TID.IOSFormula -> T.LNTerm -> T.LNTerm
-replacePermRetLNTerm p@(TID.IOSFpred (TID.Perm _ _) ts) term =
+replacePermRetLNTerm p@(TID.IOSFpred (TID.Perm _ _) _) term =
     let
         maybeIdx = elemIndex term (map TID.getLNTermFromIOSTerm $ permReturnTerms p)
         idx = maybe 0 id maybeIdx
@@ -235,6 +250,7 @@ replacePermRetLNTerm p@(TID.IOSFpred (TID.Perm _ _) ts) term =
             singleGetPermToLNTerm p idx
         else
             term
+replacePermRetLNTerm _ _ = error "replacePermRetLNTerm called with wrong arguments."
 
 mappingRetTermsGetterTerms :: TID.IOSFormula -> Map.Map T.LNTerm T.LNTerm
 mappingRetTermsGetterTerms perm =
@@ -263,6 +279,8 @@ internBIO p@(TID.IOSFpred (TID.Perm TID.Internal_R name) ts) =
         text "requires token(" <> placeSrc <> text ") && " <> permApp p $$
         text "ensures token(" <> placeDst <> text ") && " <> placeDst <> text " == old(" <>
         (getPermApp p !! 0) <> text ")" $$ 
-        functionDefDoc (text $ "internBIO_" ++ name) argsWithType (parens retTermWithType) 
+        text "decreases" $$
+        functionDefDoc (text $ "internBIO_" ++ name) argsWithType (parens retTermWithType)
+internBIO _ = error "internBIO not called with the right argument."
 
 

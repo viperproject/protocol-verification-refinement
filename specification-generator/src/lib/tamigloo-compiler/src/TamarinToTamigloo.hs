@@ -21,7 +21,7 @@ import qualified    Data.Set as S
 
 -- Tamarin prover imports
 import qualified    Theory as T
-import              Theory.Model.Signature (SignaturePure)
+-- import              Theory.Model.Signature (SignaturePure)
 import qualified    Theory.Model.Fact as F
 import qualified    Theory.Model.Rule as R
 import qualified    Theory.Model.Restriction as Restr
@@ -34,7 +34,7 @@ import              Text.Parsec         hiding ((<|>))
 
 -- Tamigloo imports
 -- ---- isabelle generated
-import              DerivingInstances
+import              DerivingInstances()
 import qualified    TamiglooDatatypes as TID
 import qualified    GenericHelperFunctions as TamiHelper
 
@@ -97,7 +97,7 @@ checkRestrFormat (Restr.Restriction _name f) = checkFormFormat f && length (T.fo
         logConn :: Form.LNFormula -> Bool
         logConn (Form.Ato (Atom.EqE _ _)) = True
         logConn (Form.TF _) = True
-        logConn (Form.Not f) = logConn f
+        logConn (Form.Not form) = logConn form
         logConn (Form.Conn _ l r) = logConn l && logConn r
         logConn _ = False
         checkFormFormat :: Form.LNFormula -> Bool
@@ -110,16 +110,17 @@ checkRestrFormat (Restr.Restriction _name f) = checkFormFormat f && length (T.fo
         -- checks that vars used in RHS of implication are subset of vars used in LHS/Fact
         -- assumes that ForAll quanitifiers are only used to wrap the overall formula, thus the same de brujin index corresponds to same quantified var
         checkBVars :: Form.LNFormula -> Bool -- TODO add checkBVars to checkRestrFormat
-        checkBVars (Form.Qua Form.All _hint (Form.Conn conn l r)) =
+        checkBVars (Form.Qua Form.All _hint (Form.Conn _conn l r)) =
             all id $ map (\e -> (elem) e (collectBVarsDups l)) (collectBVarsDups r)
         checkBVars (Form.Qua Form.All _hint nestedF) = checkBVars nestedF
         checkBVars _ = False
         collectBVarsDups :: Form.LNFormula -> [Integer] -- contains duplicates
         collectBVarsDups (Form.Ato (Atom.EqE t1 t2)) = getIntBVars t1 ++ getIntBVars t2
         collectBVarsDups (Form.Ato _) = [] -- does not conform to format
-        collectBVarsDups (Form.Not f) = collectBVarsDups f
+        collectBVarsDups (Form.Not form) = collectBVarsDups form
         collectBVarsDups (Form.Conn _ l r) = collectBVarsDups l ++ collectBVarsDups r
-        collectBVarsDups (Form.Qua _ _ f) = collectBVarsDups f
+        collectBVarsDups (Form.Qua _ _ form) = collectBVarsDups form
+        collectBVarsDups (Form.TF _) = []
         getIntBVars :: T.VTerm c (T.BVar T.LVar) -> [Integer]
         getIntBVars t = map (\(T.Bound i) -> i) (T.varsVTerm t)
 checkRestrFormat _ = False
@@ -139,6 +140,7 @@ changeLNFormToTamiForm (Form.Qua _ _ f) = changeLNFormToTamiForm f
 changeTypeProtoAtom :: (Atom.ProtoAtom s (T.VTerm T.Name (T.BVar v))) -> TID.Atom
 changeTypeProtoAtom (Atom.Action _ f) = TID.Atom (factBVarToTIDFact f)
 changeTypeProtoAtom (Atom.EqE t1 t2) = TID.EqE (bVarTermToLNTerm t1) (bVarTermToLNTerm t2)
+changeTypeProtoAtom _ = error "changeTypeProtoAtom called with wrong arguments."
 
 -- change to TID.Fact
 -- only used in restrictions: abuse LVar's index to represent De Brujin indices of BVar
@@ -208,7 +210,7 @@ createConsistencyMap thy =
         foldr getConsist Map.empty facts
     where
         getConsist :: TID.Fact -> Map.Map TID.FactTag TID.FactGroup -> Map.Map TID.FactTag TID.FactGroup
-        getConsist fact@(TID.Fact fg ft _) cMap =
+        getConsist (TID.Fact fg ft _) cMap =
             let
                 mostSpec = (mostSpecificFactGroup (cMap Map.! ft) fg)
                 ifRightMostSpec = fromRight (error $ errMsgConsistency ft) mostSpec
@@ -335,11 +337,11 @@ changeActFact :: F.LNFact -> TID.Fact
 changeActFact (F.Fact tag _ terms) = changeFreshPubToMsg $ TID.Fact TID.ActionGroup (changeFactTag tag) terms
 
 changeFreshPubToMsg :: TID.Fact -> TID.Fact
-changeFreshPubToMsg f@(TID.Fact fg ft lnTerms) =
+changeFreshPubToMsg (TID.Fact fg ft lnTerms) =
     TID.Fact fg ft (map (fmap (fmap freshPubLVarToMsg)) lnTerms)
     where
     freshPubLVarToMsg :: T.LVar -> T.LVar
-    freshPubLVarToMsg lvar@(T.LVar name lsort lindex) =
+    freshPubLVarToMsg (T.LVar name lsort lindex) =
         T.LVar name (newLsort lsort) lindex
     newLsort :: T.LSort -> T.LSort
     newLsort s = case s of
@@ -367,7 +369,7 @@ getNameProtoRuleEInfo r
     | (_:_) <- R._preRestriction r = error $ "Unexpected non-empty _preRestriction in ProtoRuleEInfo: "++ show r
 
 errMsgIsRule :: T.OpenProtoRule -> String
-errMsgIsRule r@(T.OpenProtoRule (R.Rule i p c a _) _) =
+errMsgIsRule (T.OpenProtoRule (R.Rule i p c a _) _) =
     "Error trying to parse (OpenProto)Rule:\n" ++
     "    The rule '" ++ getNameProtoRuleEInfo i ++ "' does not adhere to formatting assumptions.\n" ++
     "    It is not a protocol rule:\n" ++
@@ -379,7 +381,7 @@ errMsgIsRule r@(T.OpenProtoRule (R.Rule i p c a _) _) =
     formatMsg (isEnvRuleBoolList p a c)
     where
         formatMsg :: [(Bool, String)] -> String
-        formatMsg boolList = unlines $ map (\p -> "            - " ++ snd p ++ ": " ++ show (fst p)) boolList
+        formatMsg boolList = unlines $ map (\pa -> "            - " ++ snd pa ++ ": " ++ show (fst pa)) boolList
 
 
 
@@ -388,7 +390,7 @@ isStateRule pr act cncl = and $ TamiHelper.fstList $ isStateRuleBoolList pr act 
 
 -- list can be used for error msgs
 isStateRuleBoolList :: [F.LNFact] -> [F.LNFact] -> [F.LNFact] -> [(Bool, String)]
-isStateRuleBoolList pr act cncl = 
+isStateRuleBoolList pr _act cncl = 
     [ (isStateOrSetupPr pr, "premise contains a state or setup fact")
     , (isStateCncl cncl, "conclusion contains a state fact")
     ]
@@ -407,7 +409,7 @@ isEnvRule pr act cncl =
         and $ TamiHelper.fstList $ isEnvRuleBoolList pr act cncl
 
 isEnvRuleBoolList :: [F.LNFact] -> [F.LNFact] -> [F.LNFact] -> [(Bool, String)]
-isEnvRuleBoolList pr act cncl =
+isEnvRuleBoolList pr _act cncl =
     [ (all (not . isStateFact) pr, "no state facts in premise")
     , (all (not . isStateFact) cncl, "no state facts in conclusion")
     ]
@@ -503,13 +505,15 @@ factName :: F.LNFact -> String
 factName = (F.factTagName . F.factTag)
 
 -- all and at least one
+{-
 allAndOne :: (a->Bool) -> [a] -> Bool
 allAndOne _ [] = False
 allAndOne f xs = all f xs
-
+-}
 allSame :: (Eq a) => [a] -> Bool
 allSame xs = and $ map (uncurry (==)) $ zip xs $ tail xs
 
+{-
 intersectEq :: (a -> a -> Bool) -> [a] -> [a] -> [a]
 intersectEq _f [] _ = []
 intersectEq _f _ [] = []
@@ -517,5 +521,5 @@ intersectEq f (a:as) bs =
     if (any (f a) bs)
     then a : intersectEq f as bs
     else intersectEq f as bs
-    
+-}  
 

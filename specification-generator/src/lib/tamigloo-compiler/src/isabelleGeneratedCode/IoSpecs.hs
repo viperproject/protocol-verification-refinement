@@ -209,7 +209,7 @@ termUptSt lp rp state =
   TamiglooDatatypes.IOSTermSetOp TamiglooDatatypes.UpdateSt [lp, rp, state];
 
 predPhiR ::
-  [(TamiglooDatatypes.Fact, TamiglooDatatypes.RestrFormula)] ->
+  [TamiglooDatatypes.RestrFormula] ->
     String -> TamiglooDatatypes.Rule -> TamiglooDatatypes.IOSFormula;
 predPhiR restrs role rule =
   let {
@@ -364,7 +364,7 @@ isAbsPredPhiR (TamiglooDatatypes.IOSFex v va) = error "undefined";
 isAbsPredPhiR (TamiglooDatatypes.IOSFfa v va) = error "undefined";
 
 expandPredPhi ::
-  [(TamiglooDatatypes.Fact, TamiglooDatatypes.RestrFormula)] ->
+  [TamiglooDatatypes.RestrFormula] ->
     (String, (TamiglooDatatypes.Rule, TamiglooDatatypes.IOSFormula)) ->
       (TamiglooDatatypes.IOSFormula, TamiglooDatatypes.IOSFormula);
 expandPredPhi restrs t =
@@ -379,7 +379,7 @@ expandPredPhi restrs t =
                        else error "undefined")));
 
 getRolesIOSpec ::
-  [(TamiglooDatatypes.Fact, TamiglooDatatypes.RestrFormula)] ->
+  [TamiglooDatatypes.RestrFormula] ->
     (String,
       ([TamiglooDatatypes.Rule],
         ([TamiglooDatatypes.Rule], [TamiglooDatatypes.Rule]))) ->
@@ -409,9 +409,8 @@ extractIOSpec ::
            [(TamiglooDatatypes.IOSFormula, TamiglooDatatypes.IOSFormula)])))];
 extractIOSpec thy =
   let {
-    sepRestrs =
-      map Restrictions.separateRestr (TamiglooDatatypes.extractRestrs thy);
-  } in List.foldr (\ a -> (\ b -> getRolesIOSpec sepRestrs a : b))
+    restrs = TamiglooDatatypes.extractRestrs thy;
+  } in List.foldr (\ a -> (\ b -> getRolesIOSpec restrs a : b))
          (Decomposition.extractProtoAndIoRules thy) [];
 
 getAbsPWithDef ::
