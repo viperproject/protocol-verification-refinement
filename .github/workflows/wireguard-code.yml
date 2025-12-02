@@ -17,7 +17,7 @@ jobs:
           echo "IMAGE_ID=ghcr.io/$REPO_OWNER/protocol-verification-refinement-wireguard" >> $GITHUB_ENV
 
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Image version
         run: |
